@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purpose | fleetr ai</title>
+  <meta name="description" content="fleetr ai exists to make fleet operations smarter. And to feed families.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+  <style>
+  /* ─────────────────────────────────────────────────────
+     RESET + ROOT
+  ───────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --base:        #F9F9F7;
+    --dark:        #1F1E1D;
+    --blue:        #42a4ff;
+    --border:      rgba(31, 30, 29, 0.09);
+    --border-inv:  rgba(249, 249, 247, 0.1);
+    --muted:       rgba(31, 30, 29, 0.46);
+    --nav-h:       60px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--base);
+    color: var(--dark);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  a { text-decoration: none; }
+
+  /* Brand color */
+  .fi { color: var(--blue); }
+
+  /* ─────────────────────────────────────────────────────
+     BUTTONS
+  ───────────────────────────────────────────────────── */
+  .btn {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.18s, color 0.18s;
+  }
+  .btn-demo {
+    background: #42a4ff !important;
+    color: #ffffff !important;
+    padding: 7px 16px !important;
+    border-radius: 999px !important;
+    font-size: 14px;
+    font-weight: 500;
+    border: none !important;
+    box-shadow: none !important;
+    transition: background 0.18s;
+  }
+  .btn-demo:hover,
+  .btn-demo:focus-visible {
+    background: #2690f0 !important;
+    color: #ffffff !important;
+    outline: none;
+  }
+
+  /* ─────────────────────────────────────────────────────
+     NAV
+  ───────────────────────────────────────────────────── */
+  .nav {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 50;
+    height: var(--nav-h);
+    background: var(--base);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-inner {
+    position: relative;
+    height: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-logo {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    text-decoration: none;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: #42a4ff;
+    text-decoration: none;
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 2px rgba(255,255,255,0.9), inset 0 -1px 2px rgba(0,0,0,0.06);
+    transition: box-shadow 0.18s;
+  }
+  .nav-link:hover,
+  .nav-link:focus-visible {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12), inset 0 1px 2px rgba(255,255,255,0.9);
+    outline: none;
+  }
+  .nav-link.active {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12), inset 0 1px 2px rgba(255,255,255,0.9);
+  }
+
+  /* Hamburger */
+  .nav-hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+  }
+  .nav-hamburger:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .nav-hamburger span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--dark);
+    border-radius: 2px;
+    transition: transform 0.2s, opacity 0.2s;
+    transform-origin: center;
+  }
+  .nav-hamburger[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-hamburger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+  .nav-hamburger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* Mobile dropdown */
+  .nav-dropdown {
+    display: none;
+    position: absolute;
+    top: var(--nav-h);
+    left: 0;
+    right: 0;
+    background: var(--base);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px 14px;
+    z-index: 49;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .nav-dropdown.open { display: flex; }
+  .nav-dropdown .nav-link {
+    padding: 7px 16px;
+    border-bottom: none;
+    font-size: 14px;
+  }
+  .nav-dropdown .nav-link:last-child { border-bottom: none; }
+
+  /* ─────────────────────────────────────────────────────
+     PURPOSE SECTION
+  ───────────────────────────────────────────────────── */
+  .purpose-section {
+    padding-top: calc(var(--nav-h) + 80px);
+    padding-bottom: 80px;
+    padding-left: 52px;
+    padding-right: 52px;
+    text-align: center;
+  }
+
+  .purpose-inner {
+    max-width: 700px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .purpose-hl {
+    font-size: clamp(2.2rem, 4.5vw, 3.8rem);
+    font-weight: 800;
+    letter-spacing: -0.052em;
+    line-height: 1.04;
+    color: var(--dark);
+    margin-bottom: 3rem;
+  }
+
+  .purpose-body {
+    font-size: clamp(1.25rem, 2.2vw, 1.55rem);
+    color: var(--dark);
+    line-height: 1.65;
+    letter-spacing: -0.022em;
+    font-weight: 400;
+    text-align: center;
+  }
+
+  .purpose-body p + p {
+    margin-top: 2.2rem;
+  }
+
+  /* ─────────────────────────────────────────────────────
+     FOOTER
+  ───────────────────────────────────────────────────── */
+  .footer {
+    background: var(--dark);
+    padding: 72px 52px 0;
+  }
+
+  .footer-grid {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 48px;
+    padding-bottom: 56px;
+    border-bottom: 1px solid rgba(249,249,247,0.1);
+  }
+
+  .footer-brand-name {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--blue);
+    display: block;
+    margin-bottom: 10px;
+  }
+  .footer-tagline {
+    font-size: 14px;
+    color: rgba(249,249,247,0.48);
+    line-height: 1.55;
+  }
+
+  .footer-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .footer-nav-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(249,249,247,0.52);
+    text-decoration: none;
+    transition: color 0.18s;
+  }
+  .footer-nav-link:hover,
+  .footer-nav-link:focus-visible { color: rgba(249,249,247,0.85); outline: none; }
+
+  .footer-contact {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .footer-email {
+    font-size: 14px;
+    color: rgba(249,249,247,0.52);
+    text-decoration: none;
+    transition: color 0.18s;
+  }
+  .footer-email:hover { color: rgba(249,249,247,0.85); }
+
+  .footer-bottom {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 22px 0;
+    text-align: center;
+  }
+  .footer-copy {
+    font-size: 13px;
+    color: rgba(249,249,247,0.3);
+  }
+
+  /* ─────────────────────────────────────────────────────
+     RESPONSIVE
+  ───────────────────────────────────────────────────── */
+  @media (min-width: 769px) {
+    .nav-hamburger { display: none; }
+  }
+
+  @media (max-width: 768px) {
+    .nav-links      { display: none; }
+    .nav-hamburger  { display: flex; }
+    .btn-demo       { padding: 6px 14px !important; font-size: 13px !important; }
+    .nav-inner      { padding-left: 24px; padding-right: 24px; }
+    .purpose-section { padding-left: 24px; padding-right: 24px; }
+    .footer         { padding-left: 24px; padding-right: 24px; }
+    .footer-grid    { grid-template-columns: 1fr; gap: 36px; }
+    .footer-contact { align-items: flex-start; }
+  }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     NAV
+════════════════════════════════════════════════════════ -->
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <div class="nav-inner">
+    <div class="nav-left">
+      <button class="nav-hamburger" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-dropdown">
+        <span></span><span></span><span></span>
+      </button>
+      <a href="index.html" class="nav-logo"><span class="fi">fleetr ai</span></a>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Platform</a>
+      <a href="built-for-you.html" class="nav-link">Built for you</a>
+      <a href="purpose.html" class="nav-link active">Purpose</a>
+      <a href="index.html#contact" class="nav-link">Contact</a>
+    </div>
+    <a href="mailto:connor@fleetr.ai" class="btn btn-demo">Request a Demo</a>
+  </div>
+  <div class="nav-dropdown" id="nav-dropdown" role="menu">
+    <a href="index.html" class="nav-link" role="menuitem">Platform</a>
+    <a href="built-for-you.html" class="nav-link" role="menuitem">Built for you</a>
+    <a href="purpose.html" class="nav-link active" role="menuitem">Purpose</a>
+    <a href="index.html#contact" class="nav-link" role="menuitem">Contact</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════
+     PURPOSE
+════════════════════════════════════════════════════════ -->
+<main>
+  <section class="purpose-section">
+    <div class="purpose-inner">
+
+      <h1 class="purpose-hl">We build software.<br><span class="fi">We feed families.</span></h1>
+
+      <div class="purpose-body">
+        <p><span class="fi">fleetr ai</span> exists to make fleet operations smarter and more efficient. But we believe a business should do more than that.</p>
+        <p>When you join <span class="fi">fleetr ai</span>, your first month's subscription goes entirely to fighting food insecurity. Not a percentage. Not a fraction. All of it.</p>
+        <p>We partner with local food banks in your community, so every fleet we power feeds the families that need it most.</p>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<!-- ═══════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="footer-grid">
+
+    <div class="footer-col">
+      <span class="footer-brand-name">fleetr ai</span>
+      <p class="footer-tagline">AI-powered fleet operations.</p>
+    </div>
+
+    <nav class="footer-nav" aria-label="Footer navigation">
+      <a href="index.html" class="footer-nav-link">Platform</a>
+      <a href="built-for-you.html" class="footer-nav-link">Built for you</a>
+      <a href="purpose.html" class="footer-nav-link">Purpose</a>
+      <a href="index.html#contact" class="footer-nav-link">Contact</a>
+    </nav>
+
+    <div class="footer-contact">
+      <a href="mailto:connor@fleetr.ai" class="footer-email">connor@fleetr.ai</a>
+      <a href="mailto:connor@fleetr.ai" class="btn btn-demo">Request a Demo</a>
+    </div>
+
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">&copy; 2026 fleetr ai. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  var hamburger = document.querySelector('.nav-hamburger');
+  var dropdown  = document.getElementById('nav-dropdown');
+  if (!hamburger || !dropdown) return;
+  hamburger.addEventListener('click', function () {
+    var open = dropdown.classList.toggle('open');
+    hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  document.addEventListener('click', function (e) {
+    if (!hamburger.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
