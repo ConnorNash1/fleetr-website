@@ -652,17 +652,17 @@
      CTA SECTION
   ───────────────────────────────────────────────────── */
   .sec-cta {
-    padding: 156px 0;
+    padding: 96px 0;
     text-align: center;
     border-top: 1px solid var(--border);
   }
 
   .cta-h2 {
-    font-size: clamp(38px, 5.8vw, 86px);
+    font-size: clamp(34px, 5vw, 72px);
     font-weight: 800;
     letter-spacing: -.05em;
     line-height: .96;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
   }
 
   .cta-sub {
@@ -670,7 +670,7 @@
     color: var(--muted);
     line-height: 1.62;
     max-width: 460px;
-    margin: 0 auto 52px;
+    margin: 0 auto 36px;
   }
 
   /* ─────────────────────────────────────────────────────
@@ -684,7 +684,7 @@
   .demo-form {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
   }
 
   .sr-only {
@@ -718,7 +718,7 @@
 
   .demo-textarea {
     resize: vertical;
-    min-height: 96px;
+    min-height: 72px;
     font-family: inherit;
     line-height: 1.5;
   }
@@ -1121,7 +1121,7 @@
         <input class="demo-input" type="email" id="demo-email" name="email" placeholder="Email" autocomplete="email" required>
 
         <label class="sr-only" for="demo-message">Message</label>
-        <textarea class="demo-input demo-textarea" id="demo-message" name="message" placeholder="Tell us about your fleet (optional)" rows="4"></textarea>
+        <textarea class="demo-input demo-textarea" id="demo-message" name="message" placeholder="Anything you'd like to share? (optional)" rows="3"></textarea>
 
         <button type="submit" class="btn btn-demo demo-submit">Send Message</button>
         <p class="demo-status" id="demo-status" role="status" aria-live="polite"></p>
