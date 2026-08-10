@@ -906,14 +906,12 @@
     <div class="nav-links">
       <a href="index.html" class="nav-link">Platform</a>
       <a href="built-for-you.html" class="nav-link">Built for you</a>
-      <a href="#contact" class="nav-link">Contact</a>
     </div>
     <a href="#contact" class="btn btn-demo">Request a Demo</a>
   </div>
   <div class="nav-dropdown" id="nav-dropdown" role="menu">
     <a href="index.html" class="nav-link" role="menuitem">Platform</a>
     <a href="built-for-you.html" class="nav-link" role="menuitem">Built for you</a>
-    <a href="#contact" class="nav-link" role="menuitem">Contact</a>
   </div>
 </nav>
 <!-- test -->
@@ -1124,7 +1122,7 @@
         <label class="sr-only" for="demo-message">Message</label>
         <textarea class="demo-input demo-textarea" id="demo-message" name="message" placeholder="Tell us about your fleet (optional)" rows="4"></textarea>
 
-        <button type="submit" class="btn btn-demo demo-submit">Request a Demo</button>
+        <button type="submit" class="btn btn-demo demo-submit">Send Message</button>
         <p class="demo-status" id="demo-status" role="status" aria-live="polite"></p>
       </form>
 
@@ -1368,7 +1366,7 @@
     statusEl.textContent = message;
     statusEl.className = 'demo-status is-error';
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Request a Demo';
+    submitBtn.textContent = 'Send Message';
   }
 
   form.addEventListener('submit', function (e) {
