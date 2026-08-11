@@ -47,7 +47,12 @@
     --nav-h:       60px;
   }
 
-  html { scroll-behavior: smooth; }
+  html {
+    scroll-behavior: smooth;
+    /* Match the footer (the last section) so any overscroll or rounding
+       sliver at the bottom edge of the page is never a stray color. */
+    background: var(--dark);
+  }
 
   /* Offset anchor scroll targets so the fixed nav doesn't obscure them */
   #platform,
@@ -300,6 +305,9 @@
     position: relative;
     background: var(--dark);
     overflow: hidden;
+    /* Overlap zone1/zone3 by 1px so fractional flex heights (100dvh split
+       into 0.75/1/0.75) can never leave a rounding gap at the seam. */
+    margin: -1px 0;
   }
 
   /* Canvas fills zone 2 exactly */
@@ -487,6 +495,8 @@
   .sec-problem {
     background: var(--dark);
     padding: 116px 0;
+    /* Overlap the section above by 1px so no gap can appear at the seam. */
+    margin-top: -1px;
   }
 
   .prob-headline {
@@ -534,6 +544,8 @@
   ───────────────────────────────────────────────────── */
   .sec-features {
     padding: 116px 0;
+    /* Overlap the section above by 1px so no gap can appear at the seam. */
+    margin-top: -1px;
   }
 
   .feat-header {
@@ -604,6 +616,8 @@
   .sec-how {
     background: var(--dark);
     padding: 116px 0;
+    /* Overlap the section above by 1px so no gap can appear at the seam. */
+    margin-top: -1px;
   }
 
   .how-h2 {
@@ -655,6 +669,8 @@
     padding: 96px 0;
     text-align: center;
     border-top: 1px solid var(--border);
+    /* Overlap the section above by 1px so no gap can appear at the seam. */
+    margin-top: -1px;
   }
 
   .cta-h2 {
@@ -753,6 +769,8 @@
   .footer {
     background: var(--dark);
     padding: 72px 52px 0;
+    /* Overlap the section above by 1px so no gap can appear at the seam. */
+    margin-top: -1px;
   }
 
   .footer-grid {
