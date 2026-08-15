@@ -260,7 +260,9 @@
     margin-top: 0.22em;
     opacity: 1;
     transform: translateY(0);
-    transition: opacity 0.38s ease, transform 0.38s ease;
+    /* Kept short so that at a one second cadence the word still gets a clear
+       beat at rest. See the cycling script for the rest of the budget. */
+    transition: opacity 0.17s ease, transform 0.17s ease;
   }
 
   .bfy-sub {
@@ -619,13 +621,22 @@
       el.offsetHeight;
 
       /* Fade in and slide up to rest position */
-      el.style.transition = 'opacity 0.38s ease, transform 0.38s ease';
+      el.style.transition = 'opacity 0.19s ease, transform 0.19s ease';
       el.style.opacity    = '1';
       el.style.transform  = 'translateY(0)';
-    }, 400);
+    }, 180);
   }
 
-  setInterval(next, 2800);
+  /* One second per word. The budget inside that second is roughly 170ms
+     fading out, 190ms fading in, and the remaining ~640ms sitting still,
+     which is what keeps each word readable rather than a blur. Changing the
+     interval alone would not work: at the old 380ms transitions the word
+     would still be moving for most of the second. */
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    /* Leave the first word in place rather than cycling once a second. */
+    return;
+  }
+  setInterval(next, 1000);
 }());
 
 (function () {
