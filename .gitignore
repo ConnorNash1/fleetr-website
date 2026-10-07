@@ -3,3 +3,7 @@
 # macOS Finder metadata. Written into any folder the Finder opens, so it turns
 # up without anyone adding it on purpose.
 .DS_Store
+
+# Local preview copies with fake bookings and a stubbed network. Never served.
+zz-app.js
+zz-preview.html
