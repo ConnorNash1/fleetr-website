@@ -84,6 +84,7 @@
     display: inline-flex; align-items: center; gap: 12px; font-size: 12.5px; font-weight: 600;
     letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink);
   }
+  .kicker-plain { text-transform: none; font-size: 15px; letter-spacing: 0.04em; }
   .lead { font-size: 18px; line-height: 1.55; color: var(--ink-70); max-width: 34em; }
   @media (min-width: 760px) { .lead { font-size: 19px; } }
   .muted { color: var(--ink-55); }
@@ -280,11 +281,15 @@
   .btn-motion { padding: 6px 26px 6px 6px; gap: 14px; border-radius: 999px; background: var(--terra); color: var(--ink); }
   .bm-fill { position: absolute; z-index: -1; left: 6px; top: 6px; bottom: 6px; width: 42px; border-radius: 999px; background: var(--ink); transition: width .45s cubic-bezier(.22, 1, .36, 1); }
   .bm-icon { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--paper); flex: none; }
-  .btn-motion:active .bm-fill { width: calc(100% - 12px); }
-  .btn-motion:active { color: var(--paper); }
   @media (hover: hover) {
-    .btn-motion:hover { color: var(--paper); }
-    .btn-motion:hover .bm-fill { width: calc(100% - 12px); }
+    .btn-motion:hover, .btn-motion:active { color: var(--paper); }
+    .btn-motion:hover .bm-fill, .btn-motion:active .bm-fill { width: calc(100% - 12px); }
+  }
+  /* On touch screens the fill would only half grow before the page changes,
+     so a tap presses it like the other terracotta buttons instead. */
+  @media (hover: none) {
+    .btn-motion { box-shadow: inset 0 -3px 0 rgba(31, 30, 29, 0.16), 0 1px 2px rgba(31, 30, 29, 0.12); }
+    .btn-motion:active { background: var(--terra-dk); box-shadow: inset 0 -1px 0 rgba(31, 30, 29, 0.16), 0 0 1px rgba(31, 30, 29, 0.12); }
   }
   .hero .search { max-width: 940px; margin: 0 auto; }
   .hero .search-pill { transition: border-color .2s, box-shadow .2s; }
