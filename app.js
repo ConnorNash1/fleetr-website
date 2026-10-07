@@ -17,6 +17,9 @@ const PHOTO_BASE = `${SB_URL}/storage/v1/object/public/listing-photos/`;
 const DEFAULT_CENTRE = [47.5615, -52.7126];
 
 const CATEGORIES = ["Car", "SUV", "Truck", "Van", "Luxury", "Other"];
+// Several vehicle types travel in the URL as one comma-separated "cat",
+// always read back in CATEGORIES order.
+const catList = (s) => { const want = String(s || "").split(","); return CATEGORIES.filter((c) => want.includes(c)); };
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 // Interface icons on a 24 grid. The vehicle icons are side profiles on a
@@ -74,6 +77,17 @@ function h(tag, props, ...kids) {
     else el.setAttribute(k, String(v));
   }
   add(el, kids);
+  // Link buttons get an arrow that slides in on hover (see .btn-arrow).
+  if (tag === "a" && el.classList.contains("btn") && !el.querySelector("svg")) {
+    const label = document.createElement("span");
+    label.className = "btn-label";
+    label.append(...el.childNodes);
+    const arrow = document.createElement("span");
+    arrow.className = "btn-arrow";
+    arrow.setAttribute("aria-hidden", "true");
+    arrow.append(icon("arrow", "2.2"));
+    el.append(label, arrow);
+  }
   return el;
 }
 // replaceChildren, skipping null and false as h does.
@@ -280,6 +294,7 @@ function render() {
   else if (path === "/dealerships") page = DealershipsPage();
   else page = NotFoundPage();
   set(appEl, page);
+  reveal(appEl);
   const section = path.split("/")[1] || "";
   if (lastPath !== path) window.scrollTo(0, 0);
   lastPath = path;
@@ -290,6 +305,77 @@ function render() {
   closeNavSheet();
 }
 window.addEventListener("hashchange", render);
+
+// ─── Motion ──────────────────────────────────────────────────────────────────
+const motionOK = window.matchMedia("(prefers-reduced-motion: no-preference)");
+
+// Ported from 21st "Scroll Reveal": section heads, steps and cards fade up once
+// as they come on screen, siblings a beat apart.
+const REVEAL = ".band .split-head, .steps li, .statement, .point, .ink-band .grid";
+function reveal(root) {
+  if (!motionOK.matches || !("IntersectionObserver" in window)) return;
+  const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    io.unobserve(el);
+    el.classList.add("in");
+    // Hand the element back to its own hover transitions once it has landed.
+    el.addEventListener("transitionend", () => { el.classList.remove("reveal", "in"); el.style.transitionDelay = ""; }, { once: true });
+  }), { rootMargin: "0px 0px -8% 0px" });
+  root.querySelectorAll(REVEAL).forEach((el) => {
+    const i = el.matches(".steps li, .point") ? [...el.parentElement.children].indexOf(el) : 0;
+    el.classList.add("reveal");
+    if (i) el.style.transitionDelay = `${i * 90}ms`;
+    io.observe(el);
+  });
+  onCleanup(() => io.disconnect());
+}
+
+// Ported from 21st "Scroll animated timeline": on a phone the line between
+// the steps draws down as the list passes the middle of the screen.
+function drawSteps(list) {
+  if (!motionOK.matches) return list;
+  const narrow = window.matchMedia("(max-width: 959px)");
+  let frame = 0;
+  const paint = () => {
+    frame = 0;
+    list.classList.toggle("drawing", narrow.matches);
+    if (!narrow.matches) return;
+    const mark = window.innerHeight * 0.6;
+    list.querySelectorAll("li").forEach((li) => {
+      const r = li.getBoundingClientRect();
+      const p = (mark - (r.top + 60)) / Math.max(1, r.height - 68);
+      li.style.setProperty("--p", Math.min(1, Math.max(0, p)).toFixed(3));
+    });
+  };
+  const queue = () => { if (!frame) frame = requestAnimationFrame(paint); };
+  window.addEventListener("scroll", queue, { passive: true });
+  window.addEventListener("resize", queue);
+  setTimeout(paint, 0);
+  onCleanup(() => {
+    window.removeEventListener("scroll", queue);
+    window.removeEventListener("resize", queue);
+    if (frame) cancelAnimationFrame(frame);
+  });
+  return list;
+}
+
+// Ported from 21st "Spotlight Card": the light on result photos and the Why
+// cards sits under the mouse. Touch never sees it.
+document.addEventListener("pointermove", (e) => {
+  if (e.pointerType !== "mouse") return;
+  const el = e.target.closest && e.target.closest(".card-photo, .point");
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  el.style.setProperty("--my", `${e.clientY - r.top}px`);
+}, { passive: true });
+
+function doneTick() {
+  const t = document.createElement("template");
+  t.innerHTML = '<svg class="done-tick" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="26"/><path d="M17 29l7.5 7.5L39 21"/></svg>';
+  return t.content.firstChild;
+}
 
 // ─── Nav ─────────────────────────────────────────────────────────────────────
 const navBtn = document.querySelector(".nav-menu-btn");
@@ -302,6 +388,12 @@ navBtn.addEventListener("click", (e) => {
   navBtn.setAttribute("aria-expanded", String(open));
 });
 document.addEventListener("click", (e) => { if (!navSheet.contains(e.target)) closeNavSheet(); });
+// The focus ring in the nav is for keyboard users only: a mouse or tap click
+// (detail > 0) lets go of focus so no box is left behind.
+document.querySelector(".nav").addEventListener("click", (e) => {
+  const el = e.target.closest("a, button");
+  if (el && e.detail > 0) el.blur();
+});
 
 // ─── Calendar ────────────────────────────────────────────────────────────────
 // A two-month range picker with pick-up and return times. trip is changed in
@@ -432,7 +524,7 @@ function SearchPill({ where, trip, category, compact, onSearch }) {
   add(root,
     h("form", { class: "search-pill", role: "search", onsubmit: (e) => { e.preventDefault(); submit(); } },
       h("div", { class: "seg", onclick: () => whereInput.focus() },
-        h("label", { for: whereInput.id }, "Where"), whereInput),
+        h("label", { class: "seg-label", for: whereInput.id }, "Where"), whereInput),
       puSeg, rtSeg,
       h("button", { type: "submit", class: "search-go", "aria-label": "Search" }, icon("search", "2.6"), h("span", { class: "go-text" }, "Search"))),
     errorEl);
@@ -463,55 +555,64 @@ function searchParams({ where, trip, category }) {
 // ─── Home ────────────────────────────────────────────────────────────────────
 function HomePage(q) {
   const trip = tripFrom(q);
-  let category = CATEGORIES.includes(q.get("cat")) ? q.get("cat") : "";
-  const pill = SearchPill({ where: q.get("where") || "", trip, category, onSearch: (s) => go("/search", searchParams(s)) });
+  let cats = catList(q.get("cat"));
+  const pill = SearchPill({ where: q.get("where") || "", trip, category: cats.join(","), onSearch: (s) => go("/search", searchParams(s)) });
   const catRow = h("div", { class: "cats", role: "group", "aria-label": "Vehicle type" });
+  // Each type toggles on its own; the search button runs the search with them.
   const drawCats = () => {
-    set(catRow, CATEGORIES.map((c) => h("button", {
-      type: "button", class: `cat${category === c ? " active" : ""}`, "aria-pressed": category === c ? "true" : "false",
-      onclick: () => {
-        category = category === c ? "" : c;
-        pill.setCategory(category);
-        drawCats();
-        if (pill.state.where.trim()) pill.submit();
-      },
-    }, icon(c, "1.5"), c)));
+    set(catRow, CATEGORIES.map((c, i) => {
+      const on = cats.includes(c);
+      return h("button", {
+        type: "button", class: `cat${on ? " active" : ""}`, "aria-pressed": on ? "true" : "false",
+        onclick: (e) => {
+          cats = CATEGORIES.filter((x) => (x === c ? !on : cats.includes(x)));
+          pill.setCategory(cats.join(","));
+          drawCats();
+          // Redrawing drops focus; give it back to a keyboard user (detail 0).
+          if (!e.detail) catRow.children[i].focus();
+        },
+      }, icon(c, "1.5"), c);
+    }));
   };
   drawCats();
 
   const stepItem = (n, title, text) => h("li", null, h("span", { class: "n", "aria-hidden": "true" }, n), h("h3", null, title), h("p", null, text));
   const point = (title, text) => h("div", { class: "point" }, h("h3", null, title), h("p", null, text));
 
-  return h("div", null,
+  return h("div", { class: "home" },
     h("section", { class: "hero" }, h("div", { class: "wrap" },
       h("div", { class: "hero-top" },
         h("div", null,
-          h("span", { class: "kicker" }, "Rent a vehicle in Atlantic Canada"),
-          h("h1", { style: { marginTop: "22px" } }, "Rent from the company ", h("em", null, "down the road."))),
-        h("p", { class: "lead" }, "Cars, SUVs, trucks and vans from rental companies that live where you're going. Book in a couple of minutes, check in from your phone, and pay when you pick up the keys.")),
+          h("span", { class: "kicker" }, "Rent a vehicle"),
+          h("h1", { style: { marginTop: "22px" } }, "Book it here. Skip the counter."))),
       pill,
-      h("div", { class: "types" }, h("span", { class: "types-label" }, "Browse by type"), catRow))),
+      h("div", { class: "types" }, h("span", { class: "types-label" }, "Browse by type"), catRow),
+      h("div", { class: "hero-checkin" },
+        h("a", { class: "btn btn-motion", href: APP_URL },
+          h("span", { class: "bm-fill", "aria-hidden": "true" }),
+          h("span", { class: "bm-icon" }, icon("phone", "1.8")),
+          h("span", null, "Check in with the app"))))),
 
     h("section", { class: "band" }, h("div", { class: "wrap split" },
       h("div", { class: "split-head" },
         h("span", { class: "kicker" }, "How renting works"),
         h("h2", null, "Four steps. Only one of them happens at the counter."),
         h("p", { class: "lead" }, "Everything up to the keys is done on your phone, so pickup takes minutes, not a queue.")),
-      h("ol", { class: "steps" },
+      drawSteps(h("ol", { class: "steps" },
         stepItem("1", "Search", "Tell us where and when. You'll only see branches with a vehicle free for your dates, with the full price for the trip before tax."),
         stepItem("2", "Reserve", "Pick a vehicle and your coverages, confirm your number with a texted code, and you're booked. Nothing is charged online."),
         stepItem("3", "Check in with the app", "We text you a link. Add your licence and sign from your phone before you arrive, and the branch has everything ready."),
-        stepItem("4", "Pay at pickup", "Pay the branch when you collect the keys. If your plans change, cancel for free any time before pickup.")))),
+        stepItem("4", "Pay at pickup", "Pay the branch when you collect the keys. If your plans change, cancel for free any time before pickup."))))),
 
     h("section", { class: "band" }, h("div", { class: "wrap" },
-      h("span", { class: "kicker" }, "Why book local"),
+      h("span", { class: "kicker" }, "Why book on fleetr"),
       h("p", { class: "statement" },
-        "The people renting you a vehicle here live here too. They know the roads, they answer their own phone, and ",
-        h("span", { class: "hl" }, "the money you spend stays in the community"), "."),
+        "The counter is where rentals slow down. With fleetr, ",
+        h("span", { class: "hl" }, "it's done before you get there"), "."),
       h("div", { class: "points" },
-        point("Prices in full", "Every branch shows its daily rate, the total for your dates and the tax before you book. What you see is what you pay at the counter."),
-        point("A real branch", "Your reservation is with the company itself, not a call centre. Your confirmation text names them and gives you your code."),
-        point("Plans change", "Cancel for free any time before pickup with the link in your confirmation text. No account to make, no fee to undo it.")))),
+        point("No line", "Your licence, coverages and signature are done on your phone, so pickup takes minutes, not a queue."),
+        point("Clear pricing", "See the daily rate, the total for your dates and the tax before you book. Nothing is charged online."),
+        point("Free cancellation", "Cancel any time before pickup with the link in your confirmation text. No account to make, no fee.")))),
 
     h("section", { class: "ink-band" }, h("div", { class: "wrap grid" },
       h("div", null,
@@ -524,7 +625,26 @@ function HomePage(q) {
 }
 
 // ─── Search results ──────────────────────────────────────────────────────────
-function loadingBlock(text) { return h("div", { class: "loading" }, h("div", { class: "spinner" }), text || "Loading…"); }
+// Skeletons stand in for the page while it loads. The words are still there
+// for screen readers; the blocks are hidden from them.
+const sk = (cls, width) => h("div", { class: `sk ${cls}`, style: width ? { width } : null });
+function loadingShell(text, ...blocks) {
+  return h("div", { class: "sk-page", role: "status" }, h("span", { class: "sr-only" }, text), h("div", { "aria-hidden": "true" }, ...blocks));
+}
+const skeletonResults = () => loadingShell("Finding vehicles\u2026",
+  h("div", { class: "results-head" }, sk("sk-title", "62%"), sk("sk-line", "38%")),
+  h("div", { class: "cards" }, [0, 1, 2, 3].map(() => h("div", null,
+    h("div", { class: "sk card-photo" }), sk("sk-line", "70%"), sk("sk-line", "40%"), sk("sk-line", "100%")))));
+const skeletonBranch = () => loadingShell("Loading\u2026",
+  sk("sk-line", "120px"), sk("sk-title", "55%"), sk("sk-line", "30%"), h("div", { class: "sk hero-photo" }),
+  h("div", { class: "branch-cols" },
+    h("div", null, sk("sk-title", "40%"), [0, 1, 2, 3].map(() => sk("sk-row"))),
+    h("div", null, sk("sk-box"))));
+const skeletonCheckout = () => loadingShell("Loading\u2026",
+  sk("sk-line", "70px"), sk("sk-title", "45%"),
+  h("div", { class: "co-cols", style: { marginTop: "30px" } },
+    h("div", { class: "field-grid" }, [0, 1, 2, 3].map(() => sk("sk-field"))),
+    h("div", null, sk("sk-box"))));
 
 // Where the searched place is, so the map can open on it even when nothing
 // was found. OpenStreetMap's Nominatim, Canada and the US only, one lookup
@@ -552,18 +672,21 @@ async function geocode(place) {
 // How each vehicle type reads in a sentence.
 const CATEGORY_NOUN = { Car: "car", SUV: "SUV", Truck: "truck", Van: "van", Luxury: "luxury vehicle", Other: "vehicle of that type" };
 const CATEGORY_ONE  = { Car: "a car", SUV: "an SUV", Truck: "a truck", Van: "a van", Luxury: "a luxury vehicle", Other: "a vehicle of that type" };
+// "a car", "a car or an SUV", "a car, an SUV or a van".
+const orList = (words) => (words.length < 2 ? words.join("") : `${words.slice(0, -1).join(", ")} or ${words[words.length - 1]}`);
 const placeName = (s) => (/^[a-z]{3,4}$/i.test(s.trim()) ? s.trim().toUpperCase() : s.trim());
 
 function SearchPage(q) {
   const where = (q.get("where") || "").trim();
   const trip = tripFrom(q);
-  const category = CATEGORIES.includes(q.get("cat")) ? q.get("cat") : "";
+  const cats = catList(q.get("cat"));
+  const category = cats.join(",");
   let sort = q.get("sort") || "recommended";
   const params = (extra) => ({ ...searchParams({ where, trip, category }), sort: sort === "recommended" ? null : sort, ...extra });
   const place = placeName(where);
 
   const pill = SearchPill({ where, trip, category, compact: true, onSearch: (s) => go("/search", { ...searchParams(s), sort: params().sort }) });
-  const listEl = h("div", { class: "results-list" }, loadingBlock("Finding vehicles…"));
+  const listEl = h("div", { class: "results-list" }, skeletonResults());
   const mapBox = h("div", { class: "map", role: "region", "aria-label": "Map" });
   const mapCol = h("div", { class: "results-map" }, mapBox);
   const layout = h("div", { class: "results" }, listEl, mapCol);
@@ -573,9 +696,14 @@ function SearchPage(q) {
     [["recommended", "Recommended"], ["price_asc", "Price, low to high"], ["price_desc", "Price, high to low"]]
       .map(([v, l]) => h("option", { value: v, selected: sort === v ? "selected" : null }, l)));
   const chips = h("div", { class: "filters", role: "group", "aria-label": "Vehicle type" },
-    h("button", { type: "button", class: `chip plain${!category ? " active" : ""}`, onclick: () => go("/search", params({ cat: null })) }, "All types"),
-    CATEGORIES.map((c) => h("button", { type: "button", class: `chip${category === c ? " active" : ""}`,
-      onclick: () => go("/search", params({ cat: category === c ? null : c })) }, icon(c, "1.6"), c)),
+    h("button", { type: "button", class: `chip plain${!cats.length ? " active" : ""}`, "aria-pressed": cats.length ? "false" : "true",
+      onclick: () => go("/search", params({ cat: null })) }, "All types"),
+    // Each type toggles on its own, so several can be on at once.
+    CATEGORIES.map((c) => {
+      const on = cats.includes(c);
+      return h("button", { type: "button", class: `chip${on ? " active" : ""}`, "aria-pressed": on ? "true" : "false",
+        onclick: () => go("/search", params({ cat: CATEGORIES.filter((x) => (x === c ? !on : cats.includes(x))).join(",") || null })) }, icon(c, "1.6"), c);
+    }),
     h("label", { class: "sort" }, "Sort", sortSel));
 
   const page = h("div", null,
@@ -637,7 +765,7 @@ function SearchPage(q) {
       h("div", { class: "empty-actions" },
         h("button", { type: "button", class: "btn btn-primary", onclick: () => { window.scrollTo({ top: 0, behavior: "smooth" }); pill.openDates(); } }, icon("calendar", "1.8"), "Try other dates"),
         h("button", { type: "button", class: "btn btn-line", onclick: () => { window.scrollTo({ top: 0, behavior: "smooth" }); pill.focusWhere(); } }, "Search somewhere else"),
-        category && h("button", { type: "button", class: "btn-text", onclick: () => go("/search", params({ cat: null })) }, "Show all vehicle types")),
+        cats.length > 0 && h("button", { type: "button", class: "btn-text", onclick: () => go("/search", params({ cat: null })) }, "Show all vehicle types")),
       h("div", { class: "empty-map" }, small),
       h("p", { class: "empty-note" }, `Run a rental company${where ? ` in ${place}` : ""}? `,
         h("a", { class: "link-arrow", href: "#/rental-companies" }, "List your fleet on fleetr")));
@@ -655,7 +783,7 @@ function SearchPage(q) {
     return page;
   }
 
-  rpc("public_search_branches", { p_query: where, p_pickup: asTimestamp(tripPu(trip)), p_return: asTimestamp(tripRt(trip)), p_category: category || null })
+  rpc("public_search_branches", { p_query: where, p_pickup: asTimestamp(tripPu(trip)), p_return: asTimestamp(tripRt(trip)), p_categories: cats.length ? cats : null })
     .then((res) => {
       if (!res || !res.ok) {
         set(listEl, emptyView({ kicker: "Check your search", title: "That search didn't work.", text: reasonText(res && res.reason), branches: [] }));
@@ -671,19 +799,19 @@ function SearchPage(q) {
         let copy;
         if (!all.length) {
           copy = { kicker: "Not here yet", title: `No rental companies in ${place} on fleetr yet.`,
-                   text: "We're adding companies across Atlantic Canada. Try a nearby town or another airport, or come back soon." };
+                   text: "We're adding more companies. Try a nearby town or another airport, or come back soon." };
         } else if (reasons.length === 1 && reasons[0] !== "no_availability") {
           copy = { kicker: "Nothing available", title: `Nothing's free in ${place} for those times.`, text: reasonText(reasons[0]) };
         } else {
-          copy = { kicker: "Fully booked", title: `Every ${category ? CATEGORY_NOUN[category] : "vehicle"} in ${place} is taken for those dates.`,
-                   text: `Nothing is free from ${tripRange(trip)}. A day earlier or later often opens things up${category ? ", or try another vehicle type" : ""}.` };
+          copy = { kicker: "Fully booked", title: `Every ${cats.length ? orList(cats.map((c) => CATEGORY_NOUN[c])) : "vehicle"} in ${place} is taken for those dates.`,
+                   text: `Nothing is free from ${tripRange(trip)}. A day earlier or later often opens things up${cats.length ? ", or try another vehicle type" : ""}.` };
         }
         set(listEl, emptyView({ ...copy, branches: all }));
         return;
       }
       set(listEl,
         h("div", { class: "results-head" },
-          h("h1", null, `${open.length} ${open.length === 1 ? "company" : "companies"} with ${category ? CATEGORY_ONE[category] : "vehicles"} free in ${place}`),
+          h("h1", null, `${open.length} ${open.length === 1 ? "company" : "companies"} with ${cats.length ? orList(cats.map((c) => CATEGORY_ONE[c])) : "vehicles"} free in ${place}`),
           h("p", null, `${tripRange(trip)} · ${days} day${days === 1 ? "" : "s"} · prices before tax`)),
         h("div", { class: "cards" }, open.map((b) => {
           const perks = perksOf(b);
@@ -735,7 +863,7 @@ function emptyState(kickerText, title, text, action) {
 // ─── Branch ──────────────────────────────────────────────────────────────────
 function BranchPage(id, q) {
   const trip = tripFrom(q);
-  const root = h("div", { class: "branch" }, h("div", { class: "wrap" }, loadingBlock()));
+  const root = h("div", { class: "branch" }, h("div", { class: "wrap" }, skeletonBranch()));
   rpc("public_branch_detail", { p_location_id: id, p_pickup: asTimestamp(tripPu(trip)), p_return: asTimestamp(tripRt(trip)), p_category: null })
     .then((res) => {
       if (!res || !res.ok) {
@@ -753,13 +881,16 @@ function BranchPage(id, q) {
 function branchView(id, res, trip, q) {
   const b = res.branch;
   const classes = res.classes || [];
-  const wantCat = q.get("cat");
+  const wantCats = catList(q.get("cat"));
+  const wantCat = wantCats.join(",");
   let chosen = classes.find((c) => c.classId === q.get("cls")) || null;
   const days = res.days || rentalDays(tripPu(trip), tripRt(trip));
   const taxes = b.salesTaxes || [];
 
-  // Classes, the chosen category first.
-  const ordered = wantCat ? [...classes.filter((c) => c.category === wantCat), ...classes.filter((c) => c.category !== wantCat)] : classes;
+  // Classes, the chosen categories first.
+  const ordered = wantCats.length
+    ? [...classes.filter((c) => wantCats.includes(c.category)), ...classes.filter((c) => !wantCats.includes(c.category))]
+    : classes;
   const rows = {};
   const classList = h("div", { class: "classes" }, ordered.map((c) => {
     const row = h("button", { type: "button", class: "class-row", "aria-pressed": "false", onclick: () => choose(c) },
@@ -900,7 +1031,7 @@ function branchView(id, res, trip, q) {
 function CheckoutPage(id, q) {
   const trip = tripFrom(q);
   const clsId = q.get("cls");
-  const root = h("div", { class: "checkout" }, h("div", { class: "wrap" }, loadingBlock()));
+  const root = h("div", { class: "checkout" }, h("div", { class: "wrap" }, skeletonCheckout()));
   rpc("public_branch_detail", { p_location_id: id, p_pickup: asTimestamp(tripPu(trip)), p_return: asTimestamp(tripRt(trip)), p_category: null })
     .then((res) => {
       const backHref = branchHref(id, trip);
@@ -1258,6 +1389,7 @@ function ConfirmedPage() {
 
   return h("div", { class: "wrap" }, h("div", { class: "confirm" },
     h("div", null,
+      doneTick(),
       h("span", { class: "kicker" }, "Reservation confirmed"),
       h("h1", null, `You're booked${c.firstName ? `, ${c.firstName}` : ""}.`),
       h("p", { class: "lead" }, `We've texted you at ${fmtPhone(c.phone)} with your confirmation, a link to check in, and a link to cancel if your plans change.`),
@@ -1294,7 +1426,7 @@ function salesClose(title, text) {
     h("div", null, h("span", { class: "kicker" }, "Book a demo"), h("h2", { style: { marginTop: "18px" } }, title), h("p", null, text)),
     h("div", { class: "actions" },
       h("a", { class: "btn btn-primary", href: DEMO }, "Book a demo"),
-      h("a", { class: "btn btn-line", href: "https://internal.fleetr.ai" }, "fleetr Log In"))));
+      h("a", { class: "btn btn-line", href: "#/" }, "See what customers see"))));
 }
 
 function RentalCompaniesPage() {
@@ -1309,12 +1441,12 @@ function RentalCompaniesPage() {
           h("a", { class: "btn btn-line", href: "#/" }, "See what customers see"))),
       h("div", { class: "ledger", "aria-label": "An example morning at a branch" },
         h("div", { class: "ledger-title" }, h("span", null, "A morning at the branch"), h("span", null, "Example")),
-        ledgerRow("7:58", "var(--peri)", [h("b", null, "Booked on fleetr.ai. "), "Mid-size SUV, Friday to Monday, collision coverage accepted."]),
-        ledgerRow("8:00", "var(--sage)", [h("b", null, "Texted. "), "Confirmation, check-in link and cancel link sent."]),
-        ledgerRow("9:12", "var(--terra)", [h("b", null, "Checked in from a phone. "), "Licence scanned, 12 timestamped photos, contract signed."]),
-        ledgerRow("9:20", "var(--sage)", [h("b", null, "Picked up. "), "Odometer and fuel recorded from the vehicle's last return."]),
-        ledgerRow("11:46", "var(--terra)", [h("b", null, "Returned. "), "Quarter tank short: gas charge added at your price per litre."]),
-        ledgerRow("11:51", "var(--peri)", [h("b", null, "Damage flagged. "), "Return photos attached to a new claim."])))),
+        ledgerRow("7:58", "var(--ink)", [h("b", null, "Booked on fleetr.ai. "), "Mid-size SUV, Friday to Monday, collision coverage accepted."]),
+        ledgerRow("8:00", "var(--ink)", [h("b", null, "Texted. "), "Confirmation, check-in link and cancel link sent."]),
+        ledgerRow("9:12", "var(--ink)", [h("b", null, "Checked in from a phone. "), "Licence scanned, 12 timestamped photos, contract signed."]),
+        ledgerRow("9:20", "var(--ink)", [h("b", null, "Picked up. "), "Odometer and fuel recorded from the vehicle's last return."]),
+        ledgerRow("11:46", "var(--ink)", [h("b", null, "Returned. "), "Quarter tank short: gas charge added at your price per litre."]),
+        ledgerRow("11:51", "var(--ink)", [h("b", null, "Damage flagged. "), "Return photos attached to a new claim."])))),
 
     h("section", { class: "band" }, h("div", { class: "wrap split" },
       h("div", { class: "split-head" },
@@ -1335,7 +1467,7 @@ function RentalCompaniesPage() {
       h("div", null,
         h("span", { class: "kicker" }, "Pricing"),
         h("h2", { style: { marginTop: "18px" } }, "Pricing that grows with the business."),
-        h("p", { class: "lead", style: { marginTop: "18px" } }, "A five-car operation and a company with several branches shouldn't pay the same. fleetr is priced on the size of your fleet and the number of branches you run, so you pay for what you use.")),
+        h("p", { class: "lead", style: { marginTop: "18px" } }, "fleetr is priced as a share of your rental revenue, not by the size of your fleet or the number of branches you run. It only earns when your cars are on rent.")),
       h("div", { class: "pricing-card" },
         h("h3", null, "Every plan includes"),
         h("ul", null,
@@ -1359,7 +1491,7 @@ function DealershipsPage() {
         h("div", { class: "example" },
           h("div", { class: "big" }, "$708 a month"),
           h("p", null, "from one car at $59 a day, rented 12 days a month. An example, before costs; you set your own rates.")),
-        h("div", { class: "example", style: { borderLeftColor: "var(--terra)" } },
+        h("div", { class: "example" },
           h("div", { class: "big" }, "0 extra staff"),
           h("p", null, "Customers check in and return from their phone. Your team hands over the keys."))))),
 
