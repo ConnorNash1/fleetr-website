@@ -53,6 +53,7 @@ const ICONS = {
   pin:      '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
   calendar: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
   phone:    '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  close:    '<path d="M6 6l12 12M18 6L6 18"/>',
 };
 function icon(name, strokeWidth) {
   const t = document.createElement("template");
@@ -1413,7 +1414,61 @@ function ConfirmedPage() {
 }
 
 // ─── For Rental Companies, For Dealerships ───────────────────────────────────
-const DEMO = "mailto:hello@fleetr.ai?subject=Book%20a%20fleetr%20demo";
+// Demo requests post to Web3Forms; the access key routes them to Connor's inbox.
+const WEB3FORMS_URL = "https://api.web3forms.com/submit";
+const WEB3FORMS_KEY = "fe9cd01b-a672-4405-8430-5449cfa31aa2";
+const DEMO_ERROR = "Something went wrong. Please email connor@fleetr.ai directly.";
+
+function openDemoForm(e) {
+  e.preventDefault();
+  const close = () => { dlg.close(); dlg.remove(); };
+  const status = h("p", { class: "err", role: "status", "aria-live": "polite" });
+  const submit = h("button", { type: "submit", class: "btn btn-primary btn-block" }, "Send Message");
+  const field = (label, input) => h("label", { class: "field" }, h("span", null, label), input);
+  const form = h("form", { class: "demo-form", action: WEB3FORMS_URL, method: "POST", onsubmit: send },
+    h("input", { type: "hidden", name: "access_key", value: WEB3FORMS_KEY }),
+    h("input", { type: "hidden", name: "subject", value: "Demo Request from fleetr.ai" }),
+    h("input", { type: "hidden", name: "from_name", value: "fleetr.ai website" }),
+    h("input", { type: "checkbox", name: "botcheck", class: "demo-honeypot", tabindex: "-1", autocomplete: "off" }),
+    field("Name", h("input", { class: "input", type: "text", name: "name", autocomplete: "name", required: true })),
+    field("Email", h("input", { class: "input", type: "email", name: "email", autocomplete: "email", required: true })),
+    field("Message", h("textarea", { class: "input", name: "message", rows: "3", placeholder: "Anything you'd like to share? (optional)" })),
+    status, submit);
+  const body = h("div", { class: "demo-body" },
+    h("span", { class: "kicker" }, "Book a demo"),
+    h("h2", { id: "demo-title" }, "See fleetr with your own fleet."),
+    h("p", { class: "demo-sub" }, "Book 30 minutes with us. We'll show you exactly how it works for your operation."),
+    form);
+  const dlg = h("dialog", { class: "demo-dialog", "aria-labelledby": "demo-title",
+    onclick: (ev) => { if (ev.target === dlg) close(); },
+    onclose: () => dlg.remove() },
+    h("button", { type: "button", class: "demo-close", "aria-label": "Close", onclick: close }, icon("close", "2")),
+    body);
+
+  function send(ev) {
+    ev.preventDefault();
+    submit.disabled = true;
+    submit.textContent = "Sending...";
+    status.textContent = "";
+    fetch(WEB3FORMS_URL, { method: "POST", body: new FormData(form), headers: { Accept: "application/json" } })
+      .then((res) => res.json())
+      .then((result) => {
+        if (!result.success) throw new Error("not sent");
+        body.replaceChildren(doneTick(),
+          h("h2", { id: "demo-title" }, "Thanks! Your request is in."),
+          h("p", { class: "demo-sub" }, "We'll be in touch shortly."),
+          h("button", { type: "button", class: "btn btn-line", onclick: close }, "Close"));
+      })
+      .catch(() => {
+        status.textContent = DEMO_ERROR;
+        submit.disabled = false;
+        submit.textContent = "Send Message";
+      });
+  }
+
+  document.body.append(dlg);
+  dlg.showModal();
+}
 
 const ledgerRow = (time, dot, text) => h("div", { class: "ledger-row" },
   h("time", null, time), h("div", null, h("span", { class: "dot", style: { background: dot } }), text));
@@ -1424,7 +1479,7 @@ function salesClose(title, text) {
   return h("section", { class: "ink-band" }, h("div", { class: "wrap grid" },
     h("div", null, h("span", { class: "kicker" }, "Book a demo"), h("h2", { style: { marginTop: "18px" } }, title), h("p", null, text)),
     h("div", { class: "actions" },
-      h("a", { class: "btn btn-primary", href: DEMO }, "Book a demo"),
+      h("a", { class: "btn btn-primary", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Book a demo"),
       h("a", { class: "btn btn-line", href: "#/" }, "See what customers see"))));
 }
 
@@ -1436,7 +1491,7 @@ function RentalCompaniesPage() {
         h("h1", null, "Run the whole rental from ", h("em", null, "one place.")),
         h("p", { class: "lead" }, "Reservations, check-in, coverages, texts, damage and the return, on one screen your whole team uses. Customers do the paperwork on their own phone before they arrive."),
         h("div", { class: "actions" },
-          h("a", { class: "btn btn-primary", href: DEMO }, "Book a demo"),
+          h("a", { class: "btn btn-primary", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Book a demo"),
           h("a", { class: "btn btn-line", href: "#/" }, "See what customers see"))),
       h("div", { class: "ledger", "aria-label": "An example morning at a branch" },
         h("div", { class: "ledger-title" }, h("span", null, "A morning at the branch"), h("span", null, "Example")),
@@ -1471,7 +1526,7 @@ function RentalCompaniesPage() {
         h("h3", null, "Every plan includes"),
         h("ul", null,
           ["Reservations and rental agreements", "Customer self check-in and return", "Coverages, contracts and signatures", "Automatic texts", "Damage claims and gas charges", "Your branches on fleetr.ai"].map((t) => h("li", null, t))),
-        h("a", { class: "btn btn-primary btn-block", href: DEMO }, "Book a demo for a quote")))),
+        h("a", { class: "btn btn-primary btn-block", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Book a demo for a quote")))),
 
     salesClose("See it with your own fleet.", "We'll walk through a real day at your branch, from the booking to the return, and set up your rates and coverages with you."));
 }
@@ -1484,7 +1539,7 @@ function DealershipsPage() {
         h("h1", null, "Every car on the lot can earn ", h("em", null, "until it sells.")),
         h("p", { class: "lead" }, "Inventory sitting on the lot is money standing still. Rent it out by the day while it waits for a buyer, without hiring a rental desk."),
         h("div", { class: "actions" },
-          h("a", { class: "btn btn-primary", href: DEMO }, "Book a demo"),
+          h("a", { class: "btn btn-primary", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Book a demo"),
           h("a", { class: "btn btn-line", href: "#/rental-companies" }, "How the rental side works"))),
       h("div", null,
         h("div", { class: "example" },
