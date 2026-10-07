@@ -327,11 +327,10 @@
     grid-row: span 2; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     font-size: 19px; font-weight: 600; background: var(--ink-06); box-shadow: inset 0 0 0 1px var(--rule);
   }
-  .steps li:nth-child(4) .n { background: var(--ink); color: var(--paper); box-shadow: none; }
   .steps h3 { font-size: 21px; padding-top: 13px; }
   .steps p { color: var(--ink-70); max-width: 34em; }
   @media (min-width: 960px) {
-    .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; }
+    .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
     .steps li { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 0; padding: 0; }
     .steps li::before { left: 68px; right: -16px; top: 26px; bottom: auto; width: auto; height: 1px; }
     .steps .n { grid-row: auto; margin-bottom: 24px; }
