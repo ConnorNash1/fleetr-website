@@ -990,6 +990,13 @@ function checkoutView(id, b, cls, trip, days, backHref) {
       drawVerify();
       return;
     }
+    // Ask the worker to text the confirmation now rather than on its next
+    // 30-minute run. The verified phone token is the proof; the worker's
+    // claim stops a second text. Not awaited: the booking is already made.
+    fetch(`${WORKER}/reservation-confirmation`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+      body: JSON.stringify({ resCode: res.resCode, phoneToken: v.phoneToken }),
+    }).catch(() => { /* the 30-minute run still sends it */ });
     const qte = quote(cls, res.days || days, accepted(), taxes);
     saveConfirmation({
       resCode: res.resCode, appToken: res.appToken || null,
