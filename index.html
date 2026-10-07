@@ -318,24 +318,21 @@
   .home .split-head h2 { margin-left: auto; margin-right: auto; max-width: 16em; }
   .home .split-head .lead { margin-left: auto; margin-right: auto; }
   @media (min-width: 760px) { .home .split .split-head { margin-bottom: 72px; } }
-  .steps { list-style: none; display: grid; }
-  .steps li { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 6px 18px; padding-bottom: 34px; }
-  .steps li:last-child { padding-bottom: 0; }
-  .steps li::before { content: ""; position: absolute; left: 25.5px; top: 60px; bottom: 8px; width: 1px; background: var(--rule-2); }
-  .steps li:last-child::before { display: none; }
-  .steps .n {
-    grid-row: span 2; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 19px; font-weight: 600; background: var(--ink-06); box-shadow: inset 0 0 0 1px var(--rule);
+  /* How renting works: ported from 21st "How It Works Steps" (ln-dev7):
+     three even cards, each centred on an icon tile. */
+  .steps { list-style: none; display: grid; gap: 14px; }
+  @media (min-width: 760px) { .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; } }
+  .steps li {
+    padding: 32px 26px 30px; text-align: center; background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r-lg);
+    transition: transform .2s, box-shadow .2s, border-color .2s;
   }
-  .steps h3 { font-size: 21px; padding-top: 13px; }
-  .steps p { color: var(--ink-70); max-width: 34em; }
-  @media (min-width: 960px) {
-    .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
-    .steps li { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 0; padding: 0; }
-    .steps li::before { left: 68px; right: -16px; top: 26px; bottom: auto; width: auto; height: 1px; }
-    .steps .n { grid-row: auto; margin-bottom: 24px; }
-    .steps h3 { padding-top: 0; margin-bottom: 10px; }
-  }
+  .steps li:hover { transform: translateY(-2px); border-color: var(--rule-2); box-shadow: var(--shadow); }
+  .step-icon { width: 56px; height: 56px; margin: 0 auto; display: grid; place-items: center; border-radius: 16px; background: var(--ink-06); box-shadow: inset 0 0 0 1px var(--rule); transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
+  .step-icon svg { width: 26px; height: 26px; }
+  .steps li:hover .step-icon { transform: scale(1.06); }
+  .step-n { display: block; margin-top: 20px; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-55); }
+  .steps h3 { font-size: 21px; margin-top: 6px; }
+  .steps p { color: var(--ink-70); font-size: 15.5px; max-width: 30em; margin: 10px auto 0; }
 
   /* Why book on fleetr: ported from 21st "Features" cards. */
   .statement { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 3.6vw, 42px); line-height: 1.22; letter-spacing: -0.02em; max-width: 20em; margin-top: 22px; }
@@ -614,22 +611,16 @@
   .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s cubic-bezier(.22, 1, .36, 1), transform .6s cubic-bezier(.22, 1, .36, 1); }
   .reveal.in { opacity: 1; transform: none; }
 
-  /* Step line, ported from 21st "Scroll animated timeline": on a phone a dark
-     line draws down the light one as the steps scroll past. */
-  @media (max-width: 959px) {
-    .steps.drawing li::after { content: ""; position: absolute; left: 25px; top: 60px; bottom: 8px; width: 2px; background: var(--ink); transform-origin: top; transform: scaleY(var(--p, 0)); }
-    .steps.drawing li:last-child::after { display: none; }
-  }
-
   /* Spotlight, ported from 21st "Spotlight Card": a soft light follows the
-     mouse across result photos and the Why cards. */
-  .point { position: relative; overflow: hidden; isolation: isolate; }
-  .card-photo::after, .point::after {
+     mouse across result photos, the step cards and the Why cards. */
+  .point, .steps li { position: relative; overflow: hidden; isolation: isolate; }
+  .card-photo::after, .point::after, .steps li::after {
     content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s;
     background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(249, 249, 247, 0.4), transparent 65%);
   }
   .point::after { z-index: -1; background: radial-gradient(300px circle at var(--mx, 50%) var(--my, 50%), rgba(249, 249, 247, 0.95), transparent 65%); }
-  @media (hover: hover) and (pointer: fine) { .card:hover .card-photo::after, .point:hover::after { opacity: 1; } }
+  .steps li::after { z-index: -1; background: radial-gradient(300px circle at var(--mx, 50%) var(--my, 50%), var(--ink-06), transparent 65%); }
+  @media (hover: hover) and (pointer: fine) { .card:hover .card-photo::after, .point:hover::after, .steps li:hover::after { opacity: 1; } }
 
   /* Skeletons, ported from 21st "Skeleton Loader": grey blocks in the shape
      of the page with a light sweeping across while it loads. */

@@ -332,40 +332,11 @@ function reveal(root) {
   onCleanup(() => io.disconnect());
 }
 
-// Ported from 21st "Scroll animated timeline": on a phone the line between
-// the steps draws down as the list passes the middle of the screen.
-function drawSteps(list) {
-  if (!motionOK.matches) return list;
-  const narrow = window.matchMedia("(max-width: 959px)");
-  let frame = 0;
-  const paint = () => {
-    frame = 0;
-    list.classList.toggle("drawing", narrow.matches);
-    if (!narrow.matches) return;
-    const mark = window.innerHeight * 0.6;
-    list.querySelectorAll("li").forEach((li) => {
-      const r = li.getBoundingClientRect();
-      const p = (mark - (r.top + 60)) / Math.max(1, r.height - 68);
-      li.style.setProperty("--p", Math.min(1, Math.max(0, p)).toFixed(3));
-    });
-  };
-  const queue = () => { if (!frame) frame = requestAnimationFrame(paint); };
-  window.addEventListener("scroll", queue, { passive: true });
-  window.addEventListener("resize", queue);
-  setTimeout(paint, 0);
-  onCleanup(() => {
-    window.removeEventListener("scroll", queue);
-    window.removeEventListener("resize", queue);
-    if (frame) cancelAnimationFrame(frame);
-  });
-  return list;
-}
-
-// Ported from 21st "Spotlight Card": the light on result photos and the Why
-// cards sits under the mouse. Touch never sees it.
+// Ported from 21st "Spotlight Card": the light on result photos, the step
+// cards and the Why cards sits under the mouse. Touch never sees it.
 document.addEventListener("pointermove", (e) => {
   if (e.pointerType !== "mouse") return;
-  const el = e.target.closest && e.target.closest(".card-photo, .point");
+  const el = e.target.closest && e.target.closest(".card-photo, .point, .steps li");
   if (!el) return;
   const r = el.getBoundingClientRect();
   el.style.setProperty("--mx", `${e.clientX - r.left}px`);
@@ -577,7 +548,9 @@ function HomePage(q) {
   };
   drawCats();
 
-  const stepItem = (n, title, text) => h("li", null, h("span", { class: "n", "aria-hidden": "true" }, n), h("h3", null, title), h("p", null, text));
+  const stepItem = (n, ic, title, text) => h("li", null,
+    h("span", { class: "step-icon", "aria-hidden": "true" }, icon(ic, "1.8")),
+    h("span", { class: "step-n" }, "Step " + n), h("h3", null, title), h("p", null, text));
   const point = (title, text) => h("div", { class: "point" }, h("h3", null, title), h("p", null, text));
 
   return h("div", { class: "home" },
@@ -599,10 +572,10 @@ function HomePage(q) {
         h("span", { class: "kicker" }, "How renting works"),
         h("h2", null, "Book in minutes. Pick up in minutes."),
         h("p", { class: "lead" }, "Booking and check-in happen on your phone. At the branch, you just pay and grab the keys.")),
-      drawSteps(h("ol", { class: "steps" },
-        stepItem("1", "Search", "Tell us where and when. You'll only see branches with a vehicle free for your dates, with the full price for the trip before tax."),
-        stepItem("2", "Reserve", "Pick a vehicle and your coverages, confirm your number with a texted code, and you're booked. Nothing is charged online."),
-        stepItem("3", "Pick up", "We text you a link. At pickup, scan your licence, photograph the vehicle and sign on your phone. Then pay the branch and take the keys."))))),
+      h("ol", { class: "steps" },
+        stepItem("1", "search", "Search", "Tell us where and when. You'll only see locations with a vehicle available for your dates."),
+        stepItem("2", "calendar", "Reserve", "Pick a vehicle and your coverages, confirm your number with a texted code, and you're booked."),
+        stepItem("3", "phone", "Pick up", "At pickup, tap the link we text you, scan your licence, photograph any damage and sign.")))),
 
     h("section", { class: "band" }, h("div", { class: "wrap" },
       h("span", { class: "kicker" }, "Why book on fleetr"),
