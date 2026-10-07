@@ -590,8 +590,8 @@ function HomePage(q) {
     h("section", { class: "ink-band" }, h("div", { class: "wrap grid" },
       h("div", null,
         h("span", { class: "kicker" }, "For businesses"),
-        h("h2", { style: { marginTop: "18px" } }, "Run a rental company, or a lot full of cars?"),
-        h("p", null, "fleetr runs the whole rental, from the booking to the return, and puts your vehicles in front of people searching here.")),
+        h("h2", { style: { marginTop: "18px" } }, "Run a rental company? Or a dealership that could be one?"),
+        h("p", null, "fleetr automates the whole rental, from booking to return, and lists your vehicles here for renters to book. For dealerships, that means the cars on your lot can earn while they wait to sell.")),
       h("div", { class: "actions" },
         h("a", { class: "btn btn-primary", href: "#/rental-companies" }, "For Rental Companies"),
         h("a", { class: "btn btn-line", href: "#/dealerships" }, "For Dealerships")))));
