@@ -261,18 +261,29 @@ function photoBlock(b, cls) {
 }
 
 // ─── Maps ────────────────────────────────────────────────────────────────────
+// The branch page's one pin: terracotta, its point on the branch.
+function branchPin() {
+  const t = document.createElement("template");
+  t.innerHTML = '<span class="branch-pin"><svg viewBox="0 0 28 36" aria-hidden="true">' +
+    '<path d="M14 0C6.3 0 0 6.1 0 13.7 0 24 14 36 14 36s14-12 14-22.3C28 6.1 21.7 0 14 0z" fill="#F4845F"/>' +
+    '<circle cx="14" cy="13.7" r="5" fill="#fff"/></svg></span>';
+  return t.content.firstChild;
+}
+
 function makeMap(el, centre, zoom) {
   if (!window.L) {
     el.append(h("p", { class: "muted", style: { padding: "24px" } }, "The map couldn't be loaded."));
     return null;
   }
+  if (!window.L.maplibreGL || !window.maplibregl) {
+    el.append(h("p", { class: "muted", style: { padding: "24px" } }, "The map couldn't be loaded."));
+    return null;
+  }
   const map = window.L.map(el, { scrollWheelZoom: true }).setView(centre, zoom);
-  // OpenStreetMap's own tiles, free with attribution. The light, quiet look is
-  // a CSS filter on the tile layer (.map .leaflet-tile-pane in index.html).
-  window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  }).addTo(map);
+  // OpenFreeMap's Positron style, drawn by MapLibre GL inside Leaflet through
+  // the maplibre-gl-leaflet plugin, so markers and popups stay Leaflet's. The
+  // plugin carries the style's own attribution into Leaflet's control.
+  window.L.maplibreGL({ style: "https://tiles.openfreemap.org/styles/positron" }).addTo(map);
   onCleanup(() => map.remove());
   return map;
 }
@@ -714,6 +725,9 @@ function SearchPage(q) {
         h("a", { href: branchHref(b.locationId, trip, category), class: "link-arrow" }, "See vehicles")));
       marker.on("mouseover", () => hot(b.locationId, true));
       marker.on("mouseout", () => hot(b.locationId, false));
+      // The branch whose popup is open stays dark until it closes.
+      marker.on("popupopen", () => pinEl.classList.add("selected"));
+      marker.on("popupclose", () => pinEl.classList.remove("selected"));
       markers[b.locationId] = pinEl;
     });
     if (pinned.length > 1) map.fitBounds(pinned.map((b) => [Number(b.latitude), Number(b.longitude)]), { padding: [56, 56], maxZoom: 13 });
@@ -1004,7 +1018,7 @@ function branchView(id, res, trip, q) {
     setTimeout(() => {
       const map = makeMap(mapEl, [Number(b.latitude), Number(b.longitude)], 14);
       if (map) window.L.marker([Number(b.latitude), Number(b.longitude)], {
-        title: b.name, icon: window.L.divIcon({ className: "pin-wrap", html: h("span", { class: "here-pin" }), iconSize: null }),
+        title: b.name, icon: window.L.divIcon({ className: "pin-wrap", html: branchPin(), iconSize: null }),
       }).addTo(map);
     }, 0);
   }
@@ -1937,7 +1951,8 @@ const LEGAL = {
           "Twilio, which sends text messages.",
           "Web3Forms, which delivers contact form messages to us.",
           "GitHub, which hosts our website.",
-          "Google Fonts, OpenStreetMap, unpkg and jsDelivr, which provide fonts, maps, place search and code libraries. These receive your IP address and browser details when pages load, and OpenStreetMap receives the place you type in search.",
+          "Google Fonts, OpenFreeMap, unpkg and jsDelivr, which provide fonts, map images and code libraries. These receive your IP address and browser details when pages load.",
+          "OpenStreetMap, which provides place search. It receives the place you type in search, with your IP address and browser details.",
         ],
         "We may also disclose information if required by law.",
       ]],
