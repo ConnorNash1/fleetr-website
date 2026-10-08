@@ -865,6 +865,19 @@
   /* ── Footer ───────────────────────────────────────── */
   /* Ported from 21st "Minimal Two-Column Footer". */
   .footer { border-top: 1px solid var(--rule); padding: 48px 0 32px; }
+  /* Privacy Policy and Terms of Use: one readable column. */
+  .legal { max-width: 720px; padding: 56px 0 80px; }
+  .legal h1 { font-size: clamp(38px, 6vw, 60px); }
+  .legal .legal-updated { color: var(--ink-70); margin-top: 14px; }
+  .legal > p { margin-top: 28px; }
+  .legal section { margin-top: 40px; }
+  .legal h2 { font-size: clamp(22px, 2.6vw, 28px); }
+  .legal section p, .legal ul { margin-top: 12px; color: var(--ink-70); line-height: 1.6; }
+  .legal ul { padding-left: 22px; display: grid; gap: 8px; }
+  .legal a { text-decoration-color: var(--terra); text-underline-offset: 3px; }
+  /* The consent lines above the book and send buttons. */
+  .consent { font-size: 14px; line-height: 1.5; color: var(--ink-70); margin: 0 0 12px; }
+  .consent a { text-decoration: underline; text-underline-offset: 3px; }
   .footer .wrap { display: grid; gap: 24px; }
   @media (min-width: 760px) { .footer .wrap { grid-template-columns: auto 1fr; align-items: center; gap: 28px 40px; } .footer nav { justify-content: flex-end; } }
   .footer nav { display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 15px; }
@@ -909,6 +922,8 @@
         <a href="#/rental-companies">For Rental Companies</a>
         <a href="#/dealerships">For Dealerships</a>
         <a href="https://internal.fleetr.ai">fleetr Log In</a>
+        <a href="#/privacy">Privacy Policy</a>
+        <a href="#/terms">Terms of Use</a>
       </nav>
       <small>&copy; 2026 fleetr</small>
     </div>

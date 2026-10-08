@@ -302,6 +302,8 @@ function render() {
   else if (path === "/confirmed") page = ConfirmedPage();
   else if (path === "/rental-companies") page = RentalCompaniesPage(q);
   else if (path === "/dealerships") page = DealershipsPage();
+  else if (path === "/privacy") page = LegalPage("privacy");
+  else if (path === "/terms") page = LegalPage("terms");
   else page = NotFoundPage();
   set(appEl, page);
   reveal(appEl);
@@ -310,7 +312,7 @@ function render() {
   lastPath = path;
   document.querySelectorAll("[data-nav]").forEach((a) => {
     const n = a.getAttribute("data-nav");
-    a.classList.toggle("active", n === section || (n === "rent" && !["rental-companies", "dealerships"].includes(section)));
+    a.classList.toggle("active", n === section || (n === "rent" && !["rental-companies", "dealerships", "privacy", "terms"].includes(section)));
   });
   closeNavSheet();
 }
@@ -1114,7 +1116,8 @@ function checkoutView(id, b, cls, trip, days, backHref) {
     h("div", { class: "notice soft" }, h("b", null, "Free cancellation. "), "Cancel any time before pickup with the link in your confirmation text."),
     h("label", { class: "check" },
       h("input", { type: "checkbox", onchange: (e) => { agreed = e.target.checked; termsErr.textContent = ""; } }),
-      h("span", null, `I agree to the fleetr booking terms: this is a reservation with ${b.name}, I'll sign their rental agreement and pay at pickup, and I meet their requirements${b.minimumAge != null ? ` (minimum age ${b.minimumAge})` : ""}.`)),
+      h("span", null, "I agree to the ", legalLink("terms"), " and ", legalLink("privacy"),
+        ", and to receive texts about this booking. Reply STOP to any text to opt out.")),
     termsErr);
 
   // Verify and reserve
@@ -1160,7 +1163,7 @@ function checkoutView(id, b, cls, trip, days, backHref) {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) fail("email", "Enter a valid email address.");
     const undecided = coverages.filter((c) => !c.required && choice[c.productId] == null);
     if (undecided.length) { covErr.textContent = `Choose Accept or Decline for ${undecided.map((c) => c.name).join(", ")}.`; if (ok) first = "cov"; ok = false; }
-    if (!agreed) { termsErr.textContent = "Agree to the booking terms to continue."; if (ok) first = "terms"; ok = false; }
+    if (!agreed) { termsErr.textContent = "Tick the box to agree to the Terms of Use and Privacy Policy."; if (ok) first = "terms"; ok = false; }
     if (!ok) {
       const target = first === "cov" ? protection : first === "terms" ? terms : details;
       target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1206,6 +1209,9 @@ function checkoutView(id, b, cls, trip, days, backHref) {
   };
 
   const book = async () => {
+    // Every way in is checked here too, so a retry after the box was unticked
+    // cannot book either.
+    if (!validate()) return;
     v.busy = true; say(""); drawVerify();
     let res;
     try {
@@ -1415,7 +1421,9 @@ function openDemoForm(e) {
     field("Name", h("input", { class: "input", type: "text", name: "name", autocomplete: "name", required: true })),
     field("Email", h("input", { class: "input", type: "email", name: "email", autocomplete: "email", required: true })),
     field("Message", h("textarea", { class: "input", name: "message", rows: "3", placeholder: "Anything you'd like to share? (optional)" })),
-    status, submit);
+    status,
+    h("p", { class: "consent" }, "We'll only use your details to reply to you. See our ", legalLink("privacy"), "."),
+    submit);
   const body = h("div", { class: "demo-body" },
     h("span", { class: "kicker" }, "Book a demo"),
     h("h2", { id: "demo-title" }, "See fleetr with your own fleet."),
@@ -1890,6 +1898,136 @@ function checkinWalkthrough() {
   });
   return section;
 }
+
+// ─── Privacy Policy and Terms of Use ─────────────────────────────────────────
+// The text is as written for fleetr, word for word. Each section is a heading
+// and its lines; a line given as an array is a list.
+const LEGAL_CONTACT = ["Connor Nash, operating as fleetr", ["Email: ", "connor@fleetr.ai"],
+  { mail: ["Connor Nash", "122 Cheeseman Drive", "St. John's NL\u00a0 A1H 0G7", "Canada"] }];
+const LEGAL = {
+  privacy: {
+    title: "Privacy Policy",
+    intro: ["fleetr is operated by Connor Nash, operating as fleetr, in St. John's, Newfoundland and Labrador, Canada. This policy explains what personal information we collect through fleetr.ai and the fleetr check-in app, why, and what we do with it."],
+    sections: [
+      ["Who is responsible for your information", [
+        "When you rent a vehicle, your rental is with the rental company, not fleetr. The rental company decides what information is needed for your rental and is responsible for it. fleetr collects, stores and processes that information on the rental company's behalf to run the booking, check-in, return and records for your rental. For questions about how a rental company uses your information, contact them directly. For questions about fleetr, contact us.",
+      ]],
+      ["What we collect", [
+        "When you search on fleetr.ai: the place, dates and vehicle types you search for. If a search finds no vehicles, we save the search, without anything that identifies you, so rental companies can see demand.",
+        "When you book: your first and last name, mobile phone number, email address, and the coverages you choose. We verify your phone number with a texted code.",
+        "When you check in or return a vehicle: your reservation code and last name, the vehicle's plate, your driver's licence details (name, licence number, date of birth, issue and expiry dates, and address) and those of any other driver, photos of the vehicle, your coverage choices and acknowledgements, your signature, and at return, the odometer reading, fuel level, any new damage, and where the vehicle was left.",
+        "When you contact us: your name, email address and message.",
+        "Your licence barcode is read on your own phone. The camera image is not sent anywhere for scanning.",
+      ]],
+      ["How we use it", [
+        "To create and manage your booking, verify your phone number, and send texts about your rental, such as your confirmation, check-in link, reminders and return notices.",
+        "To let the rental company check you in, record the vehicle's condition, prepare and sign your rental agreement, process your return, and handle any damage, fuel or other charges.",
+        "To reply when you contact us.",
+        "We do not sell your information, and we do not use it for advertising.",
+      ]],
+      ["Text messages", [
+        "We send texts about your booking and rental on behalf of the rental company. Every text identifies who it's from. Reply STOP to any text to opt out. If you opt out, you may stop receiving booking updates and reminders.",
+      ]],
+      ["Who we share it with", [
+        "The rental company you book with, which receives your booking, check-in and rental information.",
+        "Service providers that help us run fleetr, only as needed to provide their service:",
+        [
+          "Supabase, which stores our database and photos.",
+          "Cloudflare, which runs parts of our service and checks for bots at checkout.",
+          "Twilio, which sends text messages.",
+          "Web3Forms, which delivers contact form messages to us.",
+          "GitHub, which hosts our website.",
+          "Google Fonts, OpenStreetMap, unpkg and jsDelivr, which provide fonts, maps, place search and code libraries. These receive your IP address and browser details when pages load, and OpenStreetMap receives the place you type in search.",
+        ],
+        "We may also disclose information if required by law.",
+      ]],
+      ["Where it's stored", [
+        "Our database and photos are stored in the United States, with Supabase on Amazon Web Services. Information stored outside Canada may be accessible to authorities in that country under its laws.",
+      ]],
+      ["How long we keep it", [
+        "Licence details, photos, signatures and other personal information for a rental are deleted automatically 1 year after the rental is fully closed, meaning no balance is owed and no damage claim is open. A rental company may keep a rental from being deleted for longer if it is needed for a dispute, insurance claim or legal requirement.",
+        "Phone verification records and verification code texts are deleted after 30 days.",
+        "Deleted information may remain in backups for up to 7 days.",
+        "Contact form messages are kept as long as needed to respond.",
+        "Rental records with personal information removed, such as dates, vehicle and charges, are kept for the rental company's business records.",
+      ]],
+      ["Cookies and browser storage", [
+        "fleetr.ai and the check-in app do not set cookies and do not use analytics or advertising tracking. fleetr.ai uses your browser's temporary session storage to remember map locations you've searched and to show your booking confirmation. This is cleared when you close the tab. Cloudflare's bot check collects browser and device signals to tell people from bots.",
+      ]],
+      ["Your choices and rights", [
+        "You can ask to access the personal information we hold about you, or ask us to correct it. For information about a rental, we may refer you to the rental company. You can withdraw consent to texts at any time by replying STOP. If you have a concern we can't resolve, you can contact the Office of the Privacy Commissioner of Canada.",
+      ]],
+      ["Changes", [
+        "We may update this policy. The date at the top shows when it last changed.",
+      ]],
+      ["Contact", LEGAL_CONTACT],
+    ],
+  },
+  terms: {
+    title: "Terms of Use",
+    intro: ["These terms apply when you search for or book a vehicle on fleetr.ai or use the fleetr check-in app. fleetr is operated by Connor Nash, operating as fleetr, in St. John's, Newfoundland and Labrador, Canada. By booking, you agree to these terms."],
+    sections: [
+      ["What fleetr is", [
+        "fleetr is a booking and check-in platform. The vehicles listed on fleetr.ai belong to independent rental companies and dealerships. When you book, your reservation and rental agreement are with that company, not with fleetr. The rental company sets its own rates, coverages, rules, requirements and rental terms, and is responsible for the vehicle and your rental.",
+      ]],
+      ["Booking", [
+        "Prices shown are set by the rental company and shown before tax. Nothing is charged online. You pay the rental company at pickup, under its payment terms.",
+        "You must give accurate information and a mobile number you control. We verify it with a texted code.",
+        "The rental company may require you to meet its own conditions at pickup, such as age, a valid driver's licence and a payment method, and may refuse a rental if you don't.",
+        "Your booking is confirmed by text with a reservation code and a check-in link.",
+      ]],
+      ["Cancelling", [
+        "You can cancel for free any time before pickup using the link in your confirmation text.",
+      ]],
+      ["Check-in and return", [
+        "At pickup, you'll use the check-in app to scan your licence, photograph the vehicle, choose or confirm coverages, and sign your rental agreement with the rental company. At return, you may be asked to record the odometer, fuel and any new damage. Photos and information you submit form part of your rental record. Make sure they're accurate.",
+      ]],
+      ["Texts", [
+        "By booking, you agree to receive texts about your booking and rental. Reply STOP to any text to opt out.",
+      ]],
+      ["Using fleetr properly", [
+        "Don't misuse fleetr.ai or the check-in app, including by submitting false information, booking on someone else's behalf without their permission, interfering with the service, or trying to access information that isn't yours.",
+      ]],
+      ["Availability", [
+        "We work to keep fleetr.ai and the check-in app running and accurate, but we don't guarantee they will always be available or error-free. Listings, availability and prices come from rental companies, and may change or contain errors.",
+      ]],
+      ["Liability", [
+        "fleetr is not a party to your rental. Questions or disputes about a vehicle, charges, damage or your rental agreement are between you and the rental company. To the extent the law allows, fleetr is not responsible for any loss arising from your rental or from using fleetr.ai or the check-in app. Nothing in these terms limits rights you have under consumer protection law that can't be limited.",
+      ]],
+      ["Governing law", [
+        "These terms are governed by the laws of Newfoundland and Labrador and the federal laws of Canada that apply there.",
+      ]],
+      ["Changes", [
+        "We may update these terms. The date at the top shows when they last changed. The terms in effect when you book apply to that booking.",
+      ]],
+      ["Contact", LEGAL_CONTACT],
+    ],
+  },
+};
+
+function legalLine(line) {
+  // The mailing address, one line each.
+  if (line && line.mail) return h("p", null, "Mail:", line.mail.flatMap((l) => [h("br"), l]));
+  if (Array.isArray(line) && typeof line[0] === "string" && line[1] === "connor@fleetr.ai") {
+    return h("p", null, line[0], h("a", { href: "mailto:connor@fleetr.ai" }, "connor@fleetr.ai"));
+  }
+  if (Array.isArray(line)) return h("ul", null, line.map((item) => h("li", null, item)));
+  return h("p", null, line);
+}
+
+function LegalPage(kind) {
+  const doc = LEGAL[kind];
+  return h("div", { class: "wrap" },
+    h("article", { class: "legal" },
+      h("h1", null, doc.title),
+      h("p", { class: "legal-updated" }, "Last updated: October 2026"),
+      doc.intro.map(legalLine),
+      doc.sections.map(([heading, lines]) => h("section", null, h("h2", null, heading), lines.map(legalLine)))));
+}
+
+// "Terms of Use" and "Privacy Policy" in a consent line. They open in a new
+// tab, so reading them never loses a booking or a message part way through.
+const legalLink = (kind) => h("a", { href: `#/${kind}`, target: "_blank", rel: "noopener" }, LEGAL[kind].title);
 
 function NotFoundPage() {
   return h("div", { class: "wrap" }, emptyState("Not found", "That page doesn't exist.", "The link may be old. Start a search instead.",
