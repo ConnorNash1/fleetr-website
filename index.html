@@ -406,10 +406,19 @@
   .map-toggle svg { width: 17px; height: 17px; }
   .map { background: var(--ink-06); }
   .leaflet-container { font-family: var(--body); background: var(--paper); }
-  .leaflet-bar a, .leaflet-bar a:hover { background: var(--paper); color: var(--ink); border-bottom-color: var(--rule); }
-  .leaflet-bar { border: 1px solid var(--rule-2) !important; box-shadow: none !important; }
-  .leaflet-control-attribution { background: var(--paper-70) !important; color: var(--ink-70); font-size: 11px; }
-  .leaflet-control-attribution a { color: var(--ink); }
+  /* Zoom buttons: white, rounded, a soft shadow, no hard edges. Phones pinch. */
+  .leaflet-bar { border: none !important; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(31, 30, 29, 0.08), 0 4px 14px rgba(31, 30, 29, 0.14) !important; }
+  .leaflet-bar a, .leaflet-bar a:hover { background: #FFFFFF; color: #1F1E1D; border: none !important; width: 34px; height: 34px; line-height: 34px; font-size: 20px; font-weight: 500; }
+  .leaflet-bar a:first-child { border-bottom: 1px solid #F1F0EC !important; }
+  .leaflet-bar a:hover { background: #F7F7F5; }
+  .leaflet-bar a.leaflet-disabled { color: #B9B8B4; background: #FFFFFF; }
+  @media (max-width: 759px) { .leaflet-control-zoom { display: none; } }
+  /* Map credits behind a small "i". */
+  .map-credit { display: flex; align-items: center; gap: 6px; margin: 0 10px 10px 0 !important; }
+  .map-credit-text { display: none; background: #FFFFFF; color: var(--ink-70); font-size: 11px; line-height: 1.4; padding: 5px 10px; border-radius: 999px; box-shadow: 0 1px 2px rgba(31, 30, 29, 0.08), 0 4px 14px rgba(31, 30, 29, 0.14); }
+  .map-credit-text a { color: #1F1E1D; }
+  .map-credit.open .map-credit-text { display: inline-block; }
+  .map-credit-btn { width: 24px; height: 24px; border: none; border-radius: 50%; background: #FFFFFF; color: #1F1E1D; font: 600 13px/24px 'Inter', sans-serif; font-style: italic; padding: 0; cursor: pointer; box-shadow: 0 1px 2px rgba(31, 30, 29, 0.08), 0 4px 14px rgba(31, 30, 29, 0.14); }
   .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--paper); color: var(--ink); box-shadow: var(--shadow-lg); }
   .leaflet-popup-content-wrapper { border-radius: var(--r); }
   .leaflet-div-icon.pin-wrap { background: none; border: none; }

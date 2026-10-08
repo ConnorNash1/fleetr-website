@@ -279,13 +279,68 @@ function makeMap(el, centre, zoom) {
     el.append(h("p", { class: "muted", style: { padding: "24px" } }, "The map couldn't be loaded."));
     return null;
   }
-  const map = window.L.map(el, { scrollWheelZoom: true }).setView(centre, zoom);
+  // Leaflet's own attribution control is off: the map's credits sit behind a
+  // small "i" instead (mapCredit, below).
+  const map = window.L.map(el, { scrollWheelZoom: true, attributionControl: false }).setView(centre, zoom);
+  mapCredit().addTo(map);
   // OpenFreeMap's Positron style, drawn by MapLibre GL inside Leaflet through
   // the maplibre-gl-leaflet plugin, so markers and popups stay Leaflet's. The
-  // plugin carries the style's own attribution into Leaflet's control.
-  window.L.maplibreGL({ style: "https://tiles.openfreemap.org/styles/positron" }).addTo(map);
-  onCleanup(() => map.remove());
+  // style is adjusted before it is drawn (positronStyle), so the boundaries
+  // and the old water colour never flash up first.
+  let gone = false;
+  onCleanup(() => { gone = true; map.remove(); });
+  positronStyle().then((style) => {
+    if (!gone) window.L.maplibreGL({ style }).addTo(map);
+  });
   return map;
+}
+
+// Positron, fetched once and adjusted: no administrative boundaries (every
+// layer whose id includes "boundary"), and water in a soft cool grey-blue.
+// Land is left as the style has it. If the style cannot be fetched here,
+// MapLibre is given its address and draws it unchanged.
+const POSITRON_URL = "https://tiles.openfreemap.org/styles/positron";
+const MAP_WATER = "#DDE3E8";
+let positronPromise = null;
+function positronStyle() {
+  if (!positronPromise) {
+    positronPromise = fetch(POSITRON_URL)
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then((style) => {
+        for (const layer of style.layers || []) {
+          if (layer.id.includes("boundary")) layer.layout = { ...(layer.layout || {}), visibility: "none" };
+          else if (layer.id === "water" && layer.type === "fill") layer.paint = { ...(layer.paint || {}), "fill-color": MAP_WATER };
+          else if (layer.id === "waterway" && layer.type === "line") layer.paint = { ...(layer.paint || {}), "line-color": MAP_WATER };
+        }
+        return style;
+      })
+      .catch(() => { positronPromise = null; return POSITRON_URL; });
+  }
+  return positronPromise;
+}
+
+// The map's credits, folded into a small "i" in the bottom corner that opens
+// on tap or click. The same three credits the style carries.
+function mapCredit() {
+  const Credit = window.L.Control.extend({
+    options: { position: "bottomright" },
+    onAdd() {
+      const credits = h("span", { class: "map-credit-text", id: `map-credit-${Math.random().toString(36).slice(2, 8)}` },
+        h("a", { href: "https://openfreemap.org", target: "_blank", rel: "noopener" }, "OpenFreeMap"), " ",
+        h("a", { href: "https://www.openmaptiles.org/", target: "_blank", rel: "noopener" }, "\u00a9 OpenMapTiles"), " Data from ",
+        h("a", { href: "https://www.openstreetmap.org/copyright", target: "_blank", rel: "noopener" }, "OpenStreetMap"));
+      const btn = h("button", { type: "button", class: "map-credit-btn", "aria-label": "Map credits", "aria-expanded": "false",
+        "aria-controls": credits.id }, "i");
+      const box = h("div", { class: "map-credit" }, credits, btn);
+      btn.addEventListener("click", () => {
+        const open = box.classList.toggle("open");
+        btn.setAttribute("aria-expanded", String(open));
+      });
+      window.L.DomEvent.disableClickPropagation(box);
+      return box;
+    },
+  });
+  return new Credit();
 }
 const hasPin = (b) => b.latitude != null && b.longitude != null && Number.isFinite(Number(b.latitude)) && Number.isFinite(Number(b.longitude));
 
