@@ -816,7 +816,10 @@ function SearchPage(q) {
       h("h1", null, title),
       h("p", null, text),
       h("div", { class: "empty-actions" },
-        h("button", { type: "button", class: "btn btn-primary", onclick: () => { window.scrollTo({ top: 0, behavior: "smooth" }); pill.openDates(); } }, icon("calendar", "1.8"), "Try other dates"),
+        // The click is stopped here, as the date fields in the pill stop theirs: left
+        // to reach the document, it counts as a click outside the calendar it has
+        // just opened and closes it again.
+        h("button", { type: "button", class: "btn btn-primary", onclick: (e) => { e.stopPropagation(); window.scrollTo({ top: 0, behavior: "smooth" }); pill.openDates(); } }, icon("calendar", "1.8"), "Try other dates"),
         h("button", { type: "button", class: "btn btn-line", onclick: () => { window.scrollTo({ top: 0, behavior: "smooth" }); pill.focusWhere(); } }, "Search somewhere else"),
         cats.length > 0 && h("button", { type: "button", class: "btn-text", onclick: () => go("/search", params({ cat: null })) }, "Show all vehicle types")),
       h("div", { class: "empty-map" }, small),
