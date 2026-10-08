@@ -696,6 +696,11 @@
   .pricing { max-width: 56rem; text-align: center; }
   .pricing h2 { font-size: clamp(38px, 6.4vw, 76px); letter-spacing: -0.025em; line-height: 1.02; }
   .pricing .lead { margin-left: auto; margin-right: auto; max-width: 36em; }
+  /* Insurance, on For Dealerships, just above Pricing. */
+  .insurance { display: grid; gap: 20px; }
+  @media (min-width: 900px) { .insurance { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 72px; align-items: end; } }
+  .insurance h2 { margin-top: 18px; }
+  .insurance .btn { margin-top: 24px; }
   .example { margin-top: 26px; border-left: 3px solid var(--ink); padding: 4px 0 4px 18px; }
   .example .big { font-family: var(--display); font-size: clamp(34px, 5vw, 52px); font-weight: 500; line-height: 1.05; }
   .example p { color: var(--ink-70); margin-top: 8px; font-size: 15px; }
