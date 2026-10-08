@@ -42,7 +42,7 @@
     --terra:      #F4845F;
     --terra-dk:   #E06D47;
     --ink-70:     #5C5B57;
-    --ink-55:     #8A8985;
+    --ink-55:     #6B6A66;
     --ink-06:     #F1F0EC;
     --rule:       #E3E2DE;
     --rule-2:     #E3E2DE;
@@ -696,6 +696,15 @@
   .pricing { max-width: 56rem; text-align: center; }
   .pricing h2 { font-size: clamp(38px, 6.4vw, 76px); letter-spacing: -0.025em; line-height: 1.02; }
   .pricing .lead { margin-left: auto; margin-right: auto; max-width: 36em; }
+  /* A soft paper glow behind the pricing text, so the subhead stays at 4.5:1
+     or better wherever the aurora's brightest band passes. The strongest band
+     needs at least 60% paper over it; the glow holds 88% across the text and
+     only fades away beyond it. */
+  .aurora-band .pricing { position: relative; isolation: isolate; }
+  .aurora-band .pricing::before {
+    content: ""; position: absolute; z-index: -1; inset: -96px -18%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(249, 249, 247, .88) 72%, rgba(249, 249, 247, 0) 100%);
+  }
   /* Insurance, on For Dealerships, just above Pricing. */
   .insurance { display: grid; gap: 20px; }
   @media (min-width: 900px) { .insurance { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 72px; align-items: end; } }
