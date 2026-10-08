@@ -54,6 +54,15 @@ const ICONS = {
   calendar: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
   phone:    '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
   close:    '<path d="M6 6l12 12M18 6L6 18"/>',
+  key:      '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/>',
+  fuel:     '<path d="M4 20V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v15M3 20h12M4 10h10M14 8l3 3v6a1.5 1.5 0 0 0 3 0V8l-3-3"/>',
+  alert:    '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/>',
+  chat:     '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+  camera:   '<path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.5"/>',
+  spark:    '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>',
+  shieldCheck: '<path class="sc-body" d="M12 2.5l8.5 3.2v6.2c0 5.2-3.6 8.7-8.5 9.8-4.9-1.1-8.5-4.6-8.5-9.8V5.7z"/><path class="sc-check" d="M8.4 12.2l2.5 2.5 4.8-5"/>',
+  document: '<path d="M6 3h8.5L19 7.5V21H6z"/><path d="M14.5 3v4.5H19M9 12h7M9 15.5h7M9 9h3"/>',
+  globe:    '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 3.5 5.4 3.5 8.5s-1 5.9-3.5 8.5c-2.5-2.6-3.5-5.4-3.5-8.5s1-5.9 3.5-8.5z"/>',
 };
 function icon(name, strokeWidth) {
   const t = document.createElement("template");
@@ -291,7 +300,7 @@ function render() {
   else if (path.startsWith("/branch/")) page = BranchPage(path.slice(8), q);
   else if (path.startsWith("/checkout/")) page = CheckoutPage(path.slice(10), q);
   else if (path === "/confirmed") page = ConfirmedPage();
-  else if (path === "/rental-companies") page = RentalCompaniesPage();
+  else if (path === "/rental-companies") page = RentalCompaniesPage(q);
   else if (path === "/dealerships") page = DealershipsPage();
   else page = NotFoundPage();
   set(appEl, page);
@@ -1443,53 +1452,210 @@ function openDemoForm(e) {
   dlg.showModal();
 }
 
-const ledgerRow = (time, dot, text) => h("div", { class: "ledger-row" },
-  h("time", null, time), h("div", null, h("span", { class: "dot", style: { background: dot } }), text));
+// A morning at the branch, ported from 21st "Timeline" (kuratlielia): each
+// event sits on an icon node, the rail draws down to the next one and the
+// events arrive one at a time while the clock in the header keeps up.
+const feedRow = (time, ic, text) => h("li", { class: "feed-row", "data-time": time },
+  h("span", { class: "feed-node", "aria-hidden": "true" }, icon(ic, "1.8")),
+  h("p", null, text), h("time", null, time));
+
+function playFeed(feed) {
+  const rows = [...feed.querySelectorAll(".feed-row")];
+  const clock = feed.querySelector(".feed-clock");
+  const show = (i) => {
+    rows[i].classList.add("on");
+    if (i) rows[i - 1].classList.add("linked");
+    clock.textContent = rows[i].dataset.time;
+    clock.classList.remove("tick"); void clock.offsetWidth; clock.classList.add("tick");
+  };
+  if (!motionOK.matches || !("IntersectionObserver" in window)) {
+    rows.forEach((_, i) => show(i));
+    return feed;
+  }
+  feed.classList.add("playing");
+  const timers = [];
+  const io = new IntersectionObserver((entries) => {
+    if (!entries.some((e) => e.isIntersecting)) return;
+    io.disconnect();
+    rows.forEach((_, i) => timers.push(setTimeout(() => show(i), 500 + i * 850)));
+  }, { threshold: 0.35 });
+  io.observe(feed);
+  onCleanup(() => { io.disconnect(); timers.forEach(clearTimeout); });
+  return feed;
+}
 
 const featureRow = (title, text) => h("div", { class: "feature" }, h("h3", null, title), h("p", null, text));
+
+// What it does, ported from 21st "Halo Reel" (ruixen.ui): feature cards ride
+// an ellipse. One angle per card sets its place, size and stacking, so the
+// near side of the ring is large and the far side small. The card at the
+// front is the selected one and its description sits beside the ring. It
+// turns on its own a card at a time; click a card or drag the ring to turn it.
+function featureReel(items) {
+  const n = items.length;
+  const step = (Math.PI * 2) / n;
+  const title = h("h3");
+  const text = h("p");
+  const badge = h("span", { class: "reel-panel-icon", "aria-hidden": "true" });
+  const panel = h("div", { class: "reel-panel", "aria-live": "polite" }, badge, title, text);
+  const cards = items.map(([ic, name], i) => h("button", { type: "button", class: "reel-card", "aria-label": name,
+    onclick: () => { if (!dragged) { pick(i); hold(); } } },
+    h("span", { class: "reel-icon", "aria-hidden": "true" }, icon(ic, "1.8")), h("b", null, name)));
+  const ring = h("div", { class: "reel-ring" }, ...cards);
+  const stage = h("div", { class: "reel" }, ring, panel);
+
+  let pos = 0, target = 0, sel = -1, frame = 0, timer = 0, visible = false, held = false, dragged = false;
+  const auto = motionOK.matches;
+  const wrapIdx = (i) => ((Math.round(i) % n) + n) % n;
+
+  function layout() {
+    const w = ring.clientWidth, hgt = ring.clientHeight;
+    const wide = w > 520;
+    const cx = w * (wide ? 0.22 : 0.18), cy = hgt / 2, rx = w * (wide ? 0.56 : 0.6), ry = hgt * 0.37;
+    cards.forEach((c, i) => {
+      const a = (i - pos) * step;
+      const cos = Math.cos(a);
+      const near = (cos + 1) / 2;
+      const x = cx + rx * cos, y = cy + ry * Math.sin(a);
+      c.style.transform = `translate(-50%, -50%) translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${(0.5 + 0.5 * near).toFixed(3)})`;
+      c.style.zIndex = String(Math.round(near * 100));
+      c.style.opacity = (0.15 + 0.85 * near * near).toFixed(3);
+    });
+    const now = wrapIdx(pos);
+    if (now !== sel) select(now);
+  }
+  function select(i) {
+    sel = i;
+    const [ic, name, desc] = items[i];
+    cards.forEach((c, j) => { c.classList.toggle("on", j === i); c.setAttribute("aria-pressed", String(j === i)); });
+    badge.replaceChildren(icon(ic, "1.8"));
+    title.textContent = name;
+    text.textContent = desc;
+    panel.classList.remove("swap"); void panel.offsetWidth; panel.classList.add("swap");
+  }
+  function animate() {
+    frame = 0;
+    const d = target - pos;
+    pos = Math.abs(d) < 0.001 ? target : pos + d * (auto ? 0.09 : 1);
+    layout();
+    if (pos !== target) frame = requestAnimationFrame(animate);
+  }
+  function pick(i) {
+    let d = i - wrapIdx(target);
+    if (d > n / 2) d -= n;
+    if (d < -n / 2) d += n;
+    target = Math.round(target) + d;
+    if (!frame) frame = requestAnimationFrame(animate);
+  }
+  function tick() {
+    clearTimeout(timer);
+    if (!auto || !visible || held) return;
+    timer = setTimeout(() => { pick(wrapIdx(target) + 1); tick(); }, 3600);
+  }
+  // A click or drag pauses the turning for a while so the text can be read.
+  let holdTimer = 0;
+  function hold() {
+    held = true; clearTimeout(timer); clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => { held = false; tick(); }, 9000);
+  }
+
+  let startX = 0, startPos = 0, dragging = false;
+  ring.addEventListener("pointerdown", (e) => {
+    dragging = true; dragged = false; startX = e.clientX; startPos = pos;
+    cancelAnimationFrame(frame); frame = 0;
+  });
+  window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerup", onUp);
+  function onMove(e) {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 6) dragged = true;
+    if (!dragged) return;
+    pos = target = startPos - dx / 90;
+    layout();
+  }
+  function onUp() {
+    if (!dragging) return;
+    dragging = false;
+    if (dragged) { target = Math.round(pos); if (!frame) frame = requestAnimationFrame(animate); hold(); }
+  }
+  stage.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); pick(wrapIdx(target) + 1); hold(); cards[wrapIdx(target)].focus(); }
+    if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); pick(wrapIdx(target) - 1); hold(); cards[wrapIdx(target)].focus(); }
+  });
+
+  const ro = "ResizeObserver" in window ? new ResizeObserver(layout) : null;
+  if (ro) ro.observe(ring);
+  const io = "IntersectionObserver" in window ? new IntersectionObserver((entries) => { visible = entries[0].isIntersecting; tick(); }, { threshold: 0.3 }) : null;
+  if (io) io.observe(stage);
+  setTimeout(layout, 0);
+  onCleanup(() => {
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
+    if (ro) ro.disconnect();
+    if (io) io.disconnect();
+    cancelAnimationFrame(frame); clearTimeout(timer); clearTimeout(holdTimer);
+  });
+  return stage;
+}
 
 function salesClose(title, text) {
   return h("section", { class: "ink-band" }, h("div", { class: "wrap grid" },
     h("div", null, h("span", { class: "kicker" }, "Book a demo"), h("h2", { style: { marginTop: "18px" } }, title), h("p", null, text)),
     h("div", { class: "actions" },
-      h("a", { class: "btn btn-primary", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Book a demo"),
-      h("a", { class: "btn btn-line", href: "#/" }, "See what customers see"))));
+      h("a", { class: "btn btn-primary", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Get started"),
+      h("a", { class: "btn btn-line", href: CHECKIN_LINK, onclick: toCheckin }, "See what customers see"))));
 }
 
-function RentalCompaniesPage() {
+// "See what customers see" links land on the walkthrough on the For Rental
+// Companies page, scrolling there directly when it's already on screen.
+const CHECKIN_LINK = "#/rental-companies?to=check-in";
+function toCheckin(e) {
+  const target = document.getElementById("check-in");
+  if (!target) return;
+  e.preventDefault();
+  target.scrollIntoView({ behavior: motionOK.matches ? "smooth" : "auto" });
+}
+
+function RentalCompaniesPage(q) {
+  if (q && q.get("to") === "check-in") setTimeout(() => { const t = document.getElementById("check-in"); if (t) t.scrollIntoView(); }, 0);
   return h("div", null,
     h("section", { class: "sales-hero" }, h("div", { class: "wrap grid" },
       h("div", null,
         h("span", { class: "kicker" }, "For rental companies"),
-        h("h1", null, "Less clicking. Fewer calls. No paperwork."),
+        h("h1", { class: "h1-lines" }, h("span", null, "Less clicking. "), h("span", null, "Fewer calls. "), h("span", null, "No paperwork.")),
         h("p", { class: "lead" }, "Booking, check-in, coverages, texts, returns, damage claims, and more, in one system your whole team uses. Customers check themselves in and out on their phone, so your staff aren't out on the lot with every customer while the phone rings at the counter."),
         h("div", { class: "actions" },
-          h("a", { class: "btn btn-primary", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "See it in action"),
-          h("a", { class: "btn btn-line", href: "#/" }, "See what customers see"))),
-      h("div", { class: "ledger", "aria-label": "An example morning at a branch" },
-        h("div", { class: "ledger-title" }, h("span", null, "A morning at the branch"), h("span", null, "Example")),
-        ledgerRow("7:58", "var(--ink)", [h("b", null, "Booked on fleetr.ai. "), "Minivan for a 9:00 pickup, collision coverage added."]),
-        ledgerRow("8:00", "var(--ink)", [h("b", null, "Texted. "), "Confirmation, check-in link and what to bring, sent automatically."]),
-        ledgerRow("9:12", "var(--ink)", [h("b", null, "Customer arrives. "), "Given the plate, they check in the minivan from their phone, photograph any damage and sign."]),
-        ledgerRow("9:17", "var(--ink)", [h("b", null, "Picked up. "), "Keys handed over. Odometer and fuel pulled from the vehicle's last return."]),
-        ledgerRow("9:46", "var(--ink)", [h("b", null, "Ready return. "), "A pickup truck back from a 3-day rental, quarter tank short. Gas charge added at your post-pay fuel price."]),
-        ledgerRow("9:49", "var(--ink)", [h("b", null, "Damage flagged. "), "Return photos attached to a new claim."])))),
+          h("a", { class: "btn btn-primary", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Get started"))),
+      playFeed(h("div", { class: "feed", "aria-label": "An example morning at a branch" },
+        h("div", { class: "feed-head" },
+          h("div", null, h("span", { class: "feed-title" }, "A morning at the branch"), h("span", { class: "feed-tag" }, "Example")),
+          h("span", { class: "feed-clock", "aria-hidden": "true" }, "7:58")),
+        h("ol", { class: "feed-list" },
+          feedRow("7:58", "calendar", [h("b", null, "Booked on fleetr.ai. "), "Minivan for a 9:00 pickup, collision coverage added."]),
+          feedRow("8:00", "phone", [h("b", null, "Texted. "), "Confirmation, check-in link and what to bring, sent automatically."]),
+          feedRow("9:12", "id", [h("b", null, "Customer arrives. "), "Given the plate, they check in the minivan from their phone, photograph any damage and sign."]),
+          feedRow("9:17", "key", [h("b", null, "Picked up. "), "Keys handed over. Odometer and fuel pulled from the vehicle's last return."]),
+          feedRow("9:46", "fuel", [h("b", null, "Ready return. "), "A pickup truck back from a 3-day rental, quarter tank short. Gas charge added at your post-pay fuel price."]),
+          feedRow("9:49", "alert", [h("b", null, "Damage flagged. "), "Return photos attached to a new claim."])))))),
 
-    h("section", { class: "band" }, h("div", { class: "wrap split" },
-      h("div", { class: "split-head" },
+    checkinWalkthrough(),
+
+    h("section", { class: "band reel-band" }, h("div", { class: "wrap" },
+      h("div", { class: "split-head reel-head" },
         h("span", { class: "kicker" }, "What it does"),
         h("h2", null, "The work that eats your team's day, handled."),
         h("p", { class: "lead" }, "Built from behind a rental counter, for the way rental companies actually work.")),
-      h("div", { class: "feature-list" },
-        featureRow("Customer check-in and return", "Customers scan their licence, photograph the vehicle and sign on their own phone at pickup, then check it back in themselves at return. Your staff don't have to be at the vehicle to do it."),
-        featureRow("Automatic texts", "Confirmations, pre-rental reminders, no-show follow-ups and return reminders go out on their own, in your wording. Your team stops making calls. The system makes them."),
-        featureRow("Reservations", "Every booking in one list: walk-ins, phone calls, insurance replacements and fleetr.ai. Rates fill in from your price list by source and vehicle class."),
-        featureRow("Coverages sold every time", "Your coverages, your wording, your prices per day, offered the same way on every rental. Declines need an acknowledgement and every choice is recorded."),
-        featureRow("Closing rentals", "Close a rental in a tap. If there's damage or gas owed, it stays pending with the reason shown until it's settled."),
-        featureRow("Damage claims", "Flag damage at return or on any agreement with photos attached. Claims stay open, with their photos, until they're resolved."),
-        featureRow("Gas charges", "Pickup fuel comes from the vehicle's record and the customer logs it at return. Anything short is charged at your price, per litre or per gallon."),
-        featureRow("Just ask", "Type or say what you need, like adding a reservation, fixing an agreement or updating a vehicle, and fleetr does it."),
-        featureRow("Listed on fleetr.ai", "Switch a branch on and it's bookable online: your hours, your rules, your retail rates and coverages, with phone-verified customers.")))),
+      featureReel([
+        ["globe", "Listed on fleetr.ai", "Renters find and book your vehicles on fleetr.ai. Every booking lands straight in your reservations."],
+        ["phone", "Customer check-in and return", "Customers scan their licence, photograph the vehicle, and sign on their own phone at pickup. At return, they log it themselves and the time is locked in. Your staff don't have to be there for either."],
+        ["chat", "Automatic texts", "Confirmations, reminders, and no-show follow-ups go out on their own, in your wording. Your team stops chasing customers by phone."],
+        ["spark", "Just ask", "Type or say what you need, like adding a reservation, fixing an agreement, or updating a vehicle, and fleetr does it."],
+        ["shieldCheck", "Coverages sold every time", "Your coverages, wording, and prices, offered the same way on every rental. Every choice the customer makes is recorded."],
+        ["calendar", "Reservations", "Every booking, wherever it comes from, all in one place. Rates fill themselves in."],
+        ["alert", "Damage claims", "Flag damage on any rental, with photos attached. Claims stay open until they're resolved."],
+        ["fuel", "Gas charges", "Fuel is tracked from pickup to return. Anything short is charged at your post-pay fuel price."],
+        ["document", "Closing rentals", "Close a rental in a tap. Anything owed keeps it pending until it's settled."]]))),
 
     h("section", { class: "band" }, h("div", { class: "wrap pricing" },
       h("div", null,
@@ -1500,7 +1666,7 @@ function RentalCompaniesPage() {
         h("h3", null, "Every plan includes"),
         h("ul", null,
           ["Reservations and rental agreements", "Customer self check-in and return", "Coverages, contracts and signatures", "Automatic texts", "Damage claims and gas charges", "Your branches on fleetr.ai"].map((t) => h("li", null, t))),
-        h("a", { class: "btn btn-primary btn-block", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Get a quote")))),
+        h("a", { class: "btn btn-primary btn-block", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Get started")))),
 
     salesClose("See it with your own fleet.", "We'll walk through a real day at your branch, from the booking to the return, and set up your rates and coverages with you."));
 }
@@ -1513,7 +1679,7 @@ function DealershipsPage() {
         h("h1", null, "Every car on the lot can earn ", h("em", null, "until it sells.")),
         h("p", { class: "lead" }, "Inventory sitting on the lot is money standing still. Rent it out by the day while it waits for a buyer, without hiring a rental desk."),
         h("div", { class: "actions" },
-          h("a", { class: "btn btn-primary", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Book a demo"),
+          h("a", { class: "btn btn-primary", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Get started"),
           h("a", { class: "btn btn-line", href: "#/rental-companies" }, "How the rental side works"))),
       h("div", null,
         h("div", { class: "example" },
@@ -1536,6 +1702,175 @@ function DealershipsPage() {
         featureRow("Back to the lot", "When a unit sells, take it off rent. Odometer and fuel are recorded at every return, so you always know what you're selling.")))),
 
     salesClose("Put your idle inventory to work.", "We'll show you how a few units on rent would work at your dealership, and what they could bring in."));
+}
+
+// ─── See what customers see ──────────────────────────────────────────────────
+// The check-in app on a phone, ported from 21st "Container Scroll Animation"
+// (manuarora700): the phone starts tilted back and flattens as it scrolls
+// into view. Inside, a mock of the real check-in plays one screen at a time
+// once the phone is on screen.
+function checkinWalkthrough() {
+  const SCREENS = 8;
+  const el = (cls, ...kids) => h("div", { class: cls }, ...kids);
+  const field = (label, value) => [h("span", { class: "ca-label" }, label), el("ca-input", value)];
+  const btn = (text, cls = "ca-btn-primary") => el("ca-btn " + cls, text);
+  const steps = (n) => [
+    el("ca-back", "← Back"),
+    el("ca-step-label", `Step ${n} of ${SCREENS}`),
+    el("ca-step-bar", ...Array.from({ length: SCREENS }, (_, j) => h("span", { class: j < n ? "on" : null })))];
+  const row = (label, value) => el("ca-row", h("span", null, label), h("b", null, value));
+  const choice = (name, price, wording, picked) => el("ca-card",
+    el("ca-card-head", h("b", null, name), h("span", null, price)),
+    wording && h("p", null, wording),
+    el("ca-choices", btn("Accept", picked === 0 ? "ca-btn-primary" : "ca-btn-line"), btn("Decline", picked === 1 ? "ca-btn-primary" : "ca-btn-line")));
+
+  const screens = [
+    ["Open the texted link", el("ca-screen",
+      el("ca-wordmark", "fleetr"),
+      ...field("Reservation Code", "KQT 482 913"),
+      btn("Scan License"),
+      el("ca-manual", "Enter details manually"),
+      ...field("License Plate", "ABC123"),
+      ...field("Plate Province / State", "NL - Newfoundland & Labrador"),
+      el("ca-spacer"),
+      btn("Start Rental Process"))],
+    ["Scan the licence", el("ca-screen ca-camera",
+      el("ca-frame",
+        el("ca-licence", el("ca-lic-photo"), el("ca-lic-lines", h("span"), h("span"), h("span"), h("span"))),
+        h("span", { class: "ca-scanline" })),
+      el("ca-camera-text", "Scanning licence"))],
+    ["Add drivers", el("ca-screen",
+      ...steps(3),
+      h("h4", null, "Drivers"),
+      h("p", { class: "ca-sub" }, "Only drivers named on the rental agreement may drive the vehicle."),
+      el("ca-card", el("ca-card-head", h("b", null, "Add another driver?"), h("span", null, "$10.00 per day")),
+        el("ca-choices", btn("Yes", "ca-btn-line"), btn("No"))),
+      el("ca-spacer"),
+      btn("Continue →"))],
+    ["Check the damage on file", el("ca-screen",
+      ...steps(4),
+      h("h4", null, "Pre-Existing Damage"),
+      el("ca-vehicle", el("ca-plate", "ABC123"), el("ca-vdetail", "Make and model")),
+      el("ca-info", "The following damage has been documented on this vehicle.", h("br"), "You are not responsible for it."),
+      el("ca-damage", "Rear bumper: light scratch"),
+      el("ca-damage", "Front passenger wheel: curb rash"),
+      el("ca-spacer"),
+      btn("I Understand, Continue →"))],
+    ["Photograph anything new", el("ca-screen",
+      ...steps(5),
+      h("h4", null, "Photos of Concern"),
+      el("ca-optional", "Optional"),
+      h("p", { class: "ca-sub" }, "See any new damage that isn't listed? Photograph it now to protect yourself."),
+      el("ca-photo", el("ca-photo-img"), el("ca-photo-text", h("b", null, "Photo 1"), h("span", null, "Driver door"))),
+      btn("Add Photos", "ca-btn-line"),
+      el("ca-spacer"),
+      btn("Continue →"))],
+    ["Choose coverages", el("ca-screen",
+      ...steps(6),
+      h("h4", null, "Coverages"),
+      h("p", { class: "ca-sub" }, "Choose the coverages you want for this rental. Each one is charged per day."),
+      choice("Collision Damage Waiver", "$29.99 per day", "Covers damage to the rental vehicle, less the deductible.", 0),
+      choice("Supplemental Liability", "$16.99 per day", null, 1),
+      el("ca-spacer"),
+      btn("Continue →"))],
+    ["Sign the contract", el("ca-screen",
+      ...steps(7),
+      h("h4", null, "Contract"),
+      h("p", { class: "ca-sub" }, "Review your rental agreement, then sign below to confirm it."),
+      el("ca-summary", row("Vehicle", "Make and model"), row("Out", "October 8, 2026"), row("Due", "October 11, 2026"), row("Daily rate", "$89.00")),
+      (() => {
+        const t = document.createElement("template");
+        t.innerHTML = '<svg class="ca-sig" viewBox="0 0 300 110" aria-hidden="true"><path d="M22 74c14-30 26-46 32-40 7 8-14 42-6 44 9 3 18-34 28-32 8 2-2 28 6 29 10 1 14-22 24-21 9 1 2 21 12 21 12 0 20-30 31-28 8 2-3 26 6 27 14 2 30-22 44-18 9 3 4 14 14 14 18 0 40-12 62-16"/></svg>';
+        return el("ca-sig-wrap", t.content.firstChild);
+      })(),
+      el("ca-spacer"),
+      btn("Clear Signature", "ca-btn-line"),
+      btn("Confirm"))],
+    ["Ready to go", el("ca-screen ca-done",
+      el("ca-spacer"),
+      doneTick(),
+      h("h4", null, "You're Good to Go!"),
+      h("p", { class: "ca-sub" }, "Your inspection is complete and on file. Enjoy your rental."),
+      el("ca-summary", row("Vehicle", "Make and model"), row("Plate", "ABC123"), row("Return by", "Oct 11, 9:00 AM")),
+      el("ca-spacer"),
+      btn("Done"))],
+  ];
+  // How long each screen stays up before its button is tapped.
+  const holds = [2600, 2400, 2200, 2600, 2400, 2600, 3200, 3200];
+
+  const track = el("ca-track", ...screens.map(([, s]) => s));
+  const caption = h("p", { class: "cs-caption", "aria-live": "polite" });
+  const dots = screens.map(([label], i) => h("button", { type: "button", class: "cs-dot", "aria-label": label, onclick: () => { show(i); restart(); } }));
+  const phone = el("cs-phone",
+    el("cs-screen",
+      el("ca",
+        el("ca-status", h("span", null, "9:12"), h("span", { class: "ca-status-icons", "aria-hidden": "true" }, h("i"), h("i"), h("i"))),
+        track)),
+    h("span", { class: "cs-island", "aria-hidden": "true" }));
+
+  let idx = 0, timer = 0, tapTimer = 0, visible = false;
+  function show(i) {
+    idx = (i + screens.length) % screens.length;
+    track.style.setProperty("--i", idx);
+    screens.forEach(([, s], j) => s.classList.toggle("on", j === idx));
+    track.querySelectorAll(".tap").forEach((b) => b.classList.remove("tap"));
+    dots.forEach((d, j) => d.setAttribute("aria-current", j === idx ? "step" : "false"));
+    caption.textContent = `${idx + 1}. ${screens[idx][0]}`;
+  }
+  const auto = motionOK.matches;
+  function restart() {
+    clearTimeout(timer); clearTimeout(tapTimer);
+    if (!auto || !visible) return;
+    timer = setTimeout(() => {
+      const cta = [...screens[idx][1].querySelectorAll(".ca-btn-primary")].pop();
+      if (cta) cta.classList.add("tap");
+      tapTimer = setTimeout(() => { show(idx + 1); restart(); }, 380);
+    }, holds[idx]);
+  }
+  show(0);
+
+  const head = el("cs-head",
+    h("span", { class: "kicker" }, "See what customers see"),
+    h("h2", null, "Check-in happens on their phone."),
+    h("p", { class: "lead" }, "Every pickup starts with a texted link. This is the check-in your customers walk through, one screen at a time."));
+  const card = el("cs-card", phone);
+  const stage = el("cs-stage", head, card,
+    el("cs-controls", el("cs-dots", ...dots), caption));
+  const section = h("section", { class: "cs", id: "check-in" }, stage);
+
+  // Scroll progress: 0 as the section's top enters the bottom of the screen,
+  // 1 once it has risen most of the way up, so the phone is flat by the time
+  // it's in full view.
+  let frame = 0;
+  const narrow = window.matchMedia("(max-width: 768px)");
+  const paint = () => {
+    frame = 0;
+    const r = section.getBoundingClientRect();
+    const p = Math.min(1, Math.max(0, (window.innerHeight - r.top) / (window.innerHeight * 0.85)));
+    const [s0, s1] = narrow.matches ? [0.9, 1] : [1.05, 1];
+    section.style.setProperty("--rot", `${20 - 20 * p}deg`);
+    section.style.setProperty("--scale", (s0 + (s1 - s0) * p).toFixed(4));
+    section.style.setProperty("--lift", `${-100 * p}px`);
+  };
+  const queue = () => { if (!frame) frame = requestAnimationFrame(paint); };
+  if (auto) {
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    setTimeout(paint, 0);
+  }
+  const io = "IntersectionObserver" in window ? new IntersectionObserver((entries) => {
+    visible = entries[0].isIntersecting;
+    restart();
+  }, { threshold: 0.4 }) : null;
+  if (io) io.observe(phone); else { visible = true; restart(); }
+  onCleanup(() => {
+    window.removeEventListener("scroll", queue);
+    window.removeEventListener("resize", queue);
+    if (frame) cancelAnimationFrame(frame);
+    if (io) io.disconnect();
+    clearTimeout(timer); clearTimeout(tapTimer);
+  });
+  return section;
 }
 
 function NotFoundPage() {
