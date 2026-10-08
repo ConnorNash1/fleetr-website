@@ -667,11 +667,35 @@
   @media (min-width: 760px) { .feature { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); } }
   .feature h3 { font-size: 22px; }
   .feature p { color: var(--ink-70); }
-  .pricing { display: grid; gap: 32px; }
-  @media (min-width: 960px) { .pricing { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 72px; align-items: start; } }
-  .pricing-card { border: 1px solid var(--rule-2); border-radius: var(--r-lg); padding: 28px; }
-  .pricing-card ul { list-style: none; margin: 18px 0 26px; }
-  .pricing-card li { padding: 11px 0; border-bottom: 1px solid var(--rule); position: relative; }
+  /* Pricing background, ported from 21st "Aurora Background" (manuarora700):
+     blurred, banded gradients drift under a radial mask. The original gets
+     its light colours by inverting and blending, which shifts the hue, so
+     here the colours are drawn directly between paper stripes: terracotta,
+     pushed a little brighter, with silver bands to set it off. */
+  .aurora-band { position: relative; overflow: hidden; isolation: isolate; }
+  .aurora-band .wrap { position: relative; z-index: 1; }
+  .aurora {
+    --stripes: repeating-linear-gradient(100deg, var(--paper) 0%, var(--paper) 4%, transparent 7%, transparent 13%, var(--paper) 16%);
+    --glow: repeating-linear-gradient(100deg, #F67A4E 10%, #C9CED4 15%, #F4845F 20%, #E4E7EB 25%, #EE6537 30%);
+    position: absolute; inset: -10px; z-index: 0; pointer-events: none; opacity: .75; will-change: transform;
+    background-image: var(--stripes), var(--glow); background-size: 300%, 200%; background-position: 50% 50%, 50% 50%;
+    filter: blur(10px);
+    -webkit-mask-image: radial-gradient(ellipse at 100% 0%, #000 20%, transparent 85%);
+    mask-image: radial-gradient(ellipse at 100% 0%, #000 20%, transparent 85%);
+  }
+  .aurora::after {
+    content: ""; position: absolute; inset: 0; opacity: .85;
+    background-image: var(--stripes), var(--glow); background-size: 200%, 100%; background-attachment: fixed;
+    animation: aurora 60s linear infinite;
+  }
+  @keyframes aurora { from { background-position: 50% 50%, 50% 50%; } to { background-position: 350% 50%, 350% 50%; } }
+  @media (prefers-reduced-motion: reduce) { .aurora::after { animation: none; } }
+  /* Pricing reads as a hero: centred, with a headline at hero size over the aurora. */
+  .aurora-band { padding: 112px 0 120px; }
+  @media (min-width: 760px) { .aurora-band { padding: 168px 0 176px; } }
+  .pricing { max-width: 56rem; text-align: center; }
+  .pricing h2 { font-size: clamp(38px, 6.4vw, 76px); letter-spacing: -0.025em; line-height: 1.02; }
+  .pricing .lead { margin-left: auto; margin-right: auto; max-width: 36em; }
   .example { margin-top: 26px; border-left: 3px solid var(--ink); padding: 4px 0 4px 18px; }
   .example .big { font-family: var(--display); font-size: clamp(34px, 5vw, 52px); font-weight: 500; line-height: 1.05; }
   .example p { color: var(--ink-70); margin-top: 8px; font-size: 15px; }

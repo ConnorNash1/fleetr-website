@@ -1644,8 +1644,7 @@ function RentalCompaniesPage(q) {
     h("section", { class: "band reel-band" }, h("div", { class: "wrap" },
       h("div", { class: "split-head reel-head" },
         h("span", { class: "kicker" }, "What it does"),
-        h("h2", null, "The work that eats your team's day, handled."),
-        h("p", { class: "lead" }, "Built from behind a rental counter, for the way rental companies actually work.")),
+        h("h2", null, "The work that eats your team's day, handled.")),
       featureReel([
         ["globe", "Listed on fleetr.ai", "Renters find and book your vehicles on fleetr.ai. Every booking lands straight in your reservations."],
         ["phone", "Customer check-in and return", "Customers scan their licence, photograph the vehicle, and sign on their own phone at pickup. At return, they log it themselves and the time is locked in. Your staff don't have to be there for either."],
@@ -1657,18 +1656,15 @@ function RentalCompaniesPage(q) {
         ["fuel", "Gas charges", "Fuel is tracked from pickup to return. Anything short is charged at your post-pay fuel price."],
         ["document", "Closing rentals", "Close a rental in a tap. Anything owed keeps it pending until it's settled."]]))),
 
-    h("section", { class: "band" }, h("div", { class: "wrap pricing" },
+    h("section", { class: "band aurora-band" },
+      h("div", { class: "aurora", "aria-hidden": "true" }),
+      h("div", { class: "wrap pricing" },
       h("div", null,
         h("span", { class: "kicker" }, "Pricing"),
-        h("h2", { style: { marginTop: "18px" } }, "Pricing that grows with the business."),
-        h("p", { class: "lead", style: { marginTop: "18px" } }, "fleetr is priced as a share of your rental revenue, not by the size of your fleet or the number of branches you run. It only earns when your cars are on rent.")),
-      h("div", { class: "pricing-card" },
-        h("h3", null, "Every plan includes"),
-        h("ul", null,
-          ["Reservations and rental agreements", "Customer self check-in and return", "Coverages, contracts and signatures", "Automatic texts", "Damage claims and gas charges", "Your branches on fleetr.ai"].map((t) => h("li", null, t))),
-        h("a", { class: "btn btn-primary btn-block", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Get started")))),
-
-    salesClose("See it with your own fleet.", "We'll walk through a real day at your branch, from the booking to the return, and set up your rates and coverages with you."));
+        h("h2", { style: { marginTop: "18px" } }, "You only pay when your vehicles are on rent."),
+        h("p", { class: "lead", style: { marginTop: "18px" } }, "fleetr is priced as a share of your rental revenue. A slow month means a smaller bill, and adding features never raises it."),
+        h("div", { style: { marginTop: "28px" } },
+          h("a", { class: "btn btn-primary", href: "#demo", "aria-haspopup": "dialog", onclick: openDemoForm }, "Get started"))))));
 }
 
 function DealershipsPage() {
