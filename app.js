@@ -214,11 +214,13 @@ const money = (n, cents) => {
   const whole = !cents && Math.abs(v - Math.round(v)) < 0.005;
   return "$" + v.toLocaleString("en-CA", { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 });
 };
+// A daily rate, in whole dollars: "$55". Trip totals and tax keep cents.
+const dayRate = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("en-CA", { maximumFractionDigits: 0 });
 
 // The price breakdown. Tax applies to every charge, as it will on the rental
 // agreement. coverages: the ones accepted, each with pricePerDay.
 function quote(cls, days, coverages, taxes) {
-  const lines = [{ label: `${money(cls.dailyRate, true)} \u00d7 ${days} day${days === 1 ? "" : "s"}`, amount: round2(cls.dailyRate * days) }];
+  const lines = [{ label: `${dayRate(cls.dailyRate)} \u00d7 ${days} day${days === 1 ? "" : "s"}`, amount: round2(cls.dailyRate * days) }];
   (coverages || []).forEach((c) => {
     const p = Number(c.pricePerDay) || 0;
     lines.push({ label: `${c.name} (${money(p, true)} \u00d7 ${days})`, amount: round2(p * days) });
@@ -777,14 +779,14 @@ function SearchPage(q) {
     const map = makeMap(el, ATLANTIC, 5);
     if (!map) return null;
     pinned.forEach((b) => {
-      const pinEl = h("span", { class: "price-pin" }, money(b.lowestDailyRate));
+      const pinEl = h("span", { class: "price-pin" }, dayRate(b.lowestDailyRate));
       const marker = window.L.marker([Number(b.latitude), Number(b.longitude)], {
         icon: window.L.divIcon({ className: "pin-wrap", html: pinEl, iconSize: null }), keyboard: true, title: b.name,
       }).addTo(map);
       marker.bindPopup(() => h("div", { style: { minWidth: "190px" } },
         h("div", { style: { fontFamily: "var(--display)", fontSize: "18px" } }, b.name),
         h("div", { style: { color: "var(--ink-55)" } }, cityOf(b)),
-        h("div", { style: { margin: "6px 0 10px" } }, "from ", h("b", null, money(b.lowestDailyRate)), " / day"),
+        h("div", { style: { margin: "6px 0 10px" } }, "from ", h("b", null, `${dayRate(b.lowestDailyRate)}/day`)),
         h("a", { href: branchHref(b.locationId, trip, category), class: "link-arrow" }, "See vehicles")));
       marker.on("mouseover", () => hot(b.locationId, true));
       marker.on("mouseout", () => hot(b.locationId, false));
@@ -887,7 +889,7 @@ function SearchPage(q) {
               h("div", { class: "card-sub" }, cityOf(b)),
               perks.length > 0 && h("div", { class: "tags" }, perks.map((p) => h("span", { class: "tag" }, p.name))),
               h("div", { class: "card-price" },
-                h("div", null, "from ", h("b", null, money(b.lowestDailyRate)), " / day"),
+                h("div", null, "from ", h("b", null, `${dayRate(b.lowestDailyRate)}/day`)),
                 h("span", null, `${money(b.total)} total`))));
           cards[b.locationId] = card;
           return card;
@@ -965,7 +967,7 @@ function branchView(id, res, trip, q) {
           classTypes(c).length && h("span", null, classTypes(c).join(", ")),
           c.seats != null && h("span", null, `${c.seats} seats`),
           c.bags != null && h("span", null, `${c.bags} bag${c.bags === 1 ? "" : "s"}`))),
-      h("div", { class: "class-price" }, h("b", null, `${money(c.dailyRate)} / day`), h("span", null, `${money(c.total, true)} total`)));
+      h("div", { class: "class-price" }, h("b", null, `${dayRate(c.dailyRate)}/day`), h("span", null, `${money(c.total, true)} total`)));
     rows[c.classId] = row;
     return row;
   }));
@@ -1000,7 +1002,7 @@ function branchView(id, res, trip, q) {
       classes.length > 0 && h("label", { class: "bb-class" }, h("small", null, "Vehicle"),
         h("select", { onchange: (e) => { const c = classes.find((x) => x.classId === e.target.value); if (c) choose(c); } },
           !chosen && h("option", { value: "", selected: "selected" }, "Choose a vehicle"),
-          classes.map((c) => h("option", { value: c.classId, selected: chosen && chosen.classId === c.classId ? "selected" : null }, `${c.name} \u00b7 ${money(c.dailyRate)}/day`)))));
+          classes.map((c) => h("option", { value: c.classId, selected: chosen && chosen.classId === c.classId ? "selected" : null }, `${c.name} \u00b7 ${dayRate(c.dailyRate)}/day`)))));
     const openCal = (e, focus) => {
       e.stopPropagation();
       if (cal) { cal.setFocus(focus); return; }
@@ -1010,7 +1012,7 @@ function branchView(id, res, trip, q) {
     const qte = chosen && quote(chosen, days, [], taxes);
     const lowest = classes.length ? Math.min(...classes.map((c) => Number(c.dailyRate))) : null;
     set(box, 
-      h("div", { class: "bb-price" }, chosen ? money(chosen.dailyRate) : (lowest != null ? `from ${money(lowest)}` : "Not available"), (chosen || lowest != null) && h("span", null, " / day")),
+      h("div", { class: "bb-price" }, chosen ? dayRate(chosen.dailyRate) : (lowest != null ? `from ${dayRate(lowest)}` : "Not available"), (chosen || lowest != null) && h("span", null, "/day")),
       fields,
       h("button", { type: "button", class: "btn btn-primary btn-block", disabled: !classes.length, onclick: reserve }, chosen ? "Reserve" : "Choose a vehicle"),
       h("p", { class: "bb-note" }, "You won't be charged now. Pay at pickup."),
@@ -1018,7 +1020,7 @@ function branchView(id, res, trip, q) {
       qte && h("p", { class: "bb-note", style: { fontSize: "13px" } }, "Coverages are chosen at checkout."));
     set(bar, 
       h("div", null,
-        h("b", null, chosen ? `${money(qte.total, true)} total` : (lowest != null ? `from ${money(lowest)} / day` : "Not available")),
+        h("b", null, chosen ? `${money(qte.total, true)} total` : (lowest != null ? `from ${dayRate(lowest)}/day` : "Not available")),
         h("small", null, tripRange(trip))),
       h("button", { type: "button", class: "btn btn-primary", disabled: !classes.length, onclick: reserve }, chosen ? "Reserve" : "Choose"));
   };
