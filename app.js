@@ -16,22 +16,26 @@ const TURNSTILE_KEY = "0x4AAAAAAFP1n93AtpZAqdDg";
 const PHOTO_BASE = `${SB_URL}/storage/v1/object/public/listing-photos/`;
 const DEFAULT_CENTRE = [47.5615, -52.7126];
 
-const CATEGORIES = ["Car", "SUV", "Truck", "Van", "Luxury", "Other"];
+// The fleetr.ai filters. A luxury or electric class shows under its Car or
+// SUV filter as well as under Luxury or Electric (each class's "types").
+const CATEGORIES = ["Car", "SUV", "Minivan", "Truck", "Van", "Electric", "Luxury", "Other"];
 // Several vehicle types travel in the URL as one comma-separated "cat",
 // always read back in CATEGORIES order.
 const catList = (s) => { const want = String(s || "").split(","); return CATEGORIES.filter((c) => want.includes(c)); };
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 // Interface icons on a 24 grid. The vehicle icons are side profiles on a
-// 40 by 24 grid, drawn to one set of wheels and one ground line so the six
+// 40 by 24 grid, drawn to one set of wheels and one ground line so the eight
 // read as a family.
 const SVG_OPEN = (vb) => `<svg viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">`;
 const WHEELS = '<circle cx="10.5" cy="17.5" r="2.6"/><circle cx="29.5" cy="17.5" r="2.6"/><path d="M3 17.5h4.9M13.1 17.5h13.8M32.1 17.5H37"/>';
 const VEHICLES = {
   Car:    '<path d="M3 17.5v-3.1c0-1 .7-1.9 1.7-2.1L9.6 11l3.9-3.6c.7-.6 1.6-1 2.5-1h8.5c1 0 2 .4 2.7 1.2l3.1 3.4 4.6 1c1 .2 1.7 1.1 1.7 2.1v3.4"/><path d="M11.3 11h18.9M20.2 6.6V11"/>' + WHEELS,
   SUV:    '<path d="M3 17.5V9.6C3 8.7 3.7 8 4.6 8h20.6l5.4 3.6 4.9 1c.9.2 1.5 1 1.5 1.9v3"/><path d="M3 11.6h27.6M12 8v3.6M21 8v3.6M6 5.6h17"/>' + WHEELS,
+  Minivan: '<path d="M3 17.5V8.2C3 7 4 6 5.2 6h19.3c1 0 1.9.4 2.6 1.1l4.9 4.9 2.9.7c.9.2 1.6 1 1.6 2v2.8"/><path d="M3 10.8h28.4M17.8 6v11.5M10 6v4.8"/>' + WHEELS,
   Truck:  '<path d="M3 17.5v-6.3h16.5"/><path d="M19.5 17.5V6.8h7.6l4.3 4.6 4.1.7c.9.2 1.5.9 1.5 1.8v3.6"/><path d="M23.4 6.8v4.6h8"/>' + WHEELS,
   Van:    '<path d="M3 17.5V6.6C3 5.7 3.7 5 4.6 5h22.6l5.9 5.6 2.4.6c.9.2 1.5 1 1.5 1.9v4.4"/><path d="M27.2 5v5.6h5.9M7 8.6h15.5M17.5 8.6v8.9"/>' + WHEELS,
+  Electric: '<path d="M3 17.5v-3.1c0-1 .7-1.9 1.7-2.1L9.6 11l3.9-3.6c.7-.6 1.6-1 2.5-1h8.5c1 0 2 .4 2.7 1.2l3.1 3.4 4.6 1c1 .2 1.7 1.1 1.7 2.1v3.4"/><path d="M11.3 11h18.9M35.4 1.8l-2.7 3.7h2.6l-2 3.4"/>' + WHEELS,
   Luxury: '<path d="M3 17.5v-2.8c0-1 .7-1.9 1.7-2.1l6.6-1.2 4.7-3.6c.8-.6 1.7-.9 2.7-.9h4.6c1.1 0 2.1.5 2.8 1.3l3 3.2 5.4 1c1 .2 1.7 1.1 1.7 2.1v3"/><path d="M13.5 11.4h15.4M33.5 3.6l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/>' + WHEELS,
   Other:  '<circle cx="11" cy="12" r="5"/><circle cx="11" cy="12" r="1.5"/><path d="M16 12h19M30 12v4M34.5 12v3"/>',
 };
@@ -720,8 +724,12 @@ async function geocode(place) {
   return hit;
 }
 // How each vehicle type reads in a sentence.
-const CATEGORY_NOUN = { Car: "car", SUV: "SUV", Truck: "truck", Van: "van", Luxury: "luxury vehicle", Other: "vehicle of that type" };
-const CATEGORY_ONE  = { Car: "a car", SUV: "an SUV", Truck: "a truck", Van: "a van", Luxury: "a luxury vehicle", Other: "a vehicle of that type" };
+const CATEGORY_NOUN = { Car: "car", SUV: "SUV", Minivan: "minivan", Truck: "truck", Van: "van", Electric: "electric vehicle", Luxury: "luxury vehicle", Other: "vehicle of that type" };
+const CATEGORY_ONE  = { Car: "a car", SUV: "an SUV", Minivan: "a minivan", Truck: "a truck", Van: "a van", Electric: "an electric vehicle", Luxury: "a luxury vehicle", Other: "a vehicle of that type" };
+// The filters a class shows under, and the icon it is drawn with: electric
+// or luxury before its body type.
+const classTypes = (c) => (Array.isArray(c.types) && c.types.length ? c.types : [c.category || "Other"]);
+const classIcon = (c) => (c.electric ? "Electric" : c.luxury ? "Luxury" : c.category || "Other");
 // "a car", "a car or an SUV", "a car, an SUV or a van".
 const orList = (words) => (words.length < 2 ? words.join("") : `${words.slice(0, -1).join(", ")} or ${words[words.length - 1]}`);
 const placeName = (s) => (/^[a-z]{3,4}$/i.test(s.trim()) ? s.trim().toUpperCase() : s.trim());
@@ -945,16 +953,16 @@ function branchView(id, res, trip, q) {
 
   // Classes, the chosen categories first.
   const ordered = wantCats.length
-    ? [...classes.filter((c) => wantCats.includes(c.category)), ...classes.filter((c) => !wantCats.includes(c.category))]
+    ? [...classes.filter((c) => classTypes(c).some((t) => wantCats.includes(t))), ...classes.filter((c) => !classTypes(c).some((t) => wantCats.includes(t)))]
     : classes;
   const rows = {};
   const classList = h("div", { class: "classes" }, ordered.map((c) => {
     const row = h("button", { type: "button", class: "class-row", "aria-pressed": "false", onclick: () => choose(c) },
-      h("div", { class: "class-icon" }, icon(c.category || "Other", "1.5")),
+      h("div", { class: "class-icon" }, icon(classIcon(c), "1.5")),
       h("div", null,
         h("div", { class: "class-name" }, c.name),
         h("div", { class: "class-meta" },
-          c.category && h("span", null, c.category),
+          classTypes(c).length && h("span", null, classTypes(c).join(", ")),
           c.seats != null && h("span", null, `${c.seats} seats`),
           c.bags != null && h("span", null, `${c.bags} bag${c.bags === 1 ? "" : "s"}`))),
       h("div", { class: "class-price" }, h("b", null, `${money(c.dailyRate)} / day`), h("span", null, `${money(c.total, true)} total`)));
@@ -1122,7 +1130,7 @@ function checkoutView(id, b, cls, trip, days, backHref) {
   const drawSummary = () => {
     set(summary, 
       h("div", { class: "summary-head" },
-        h("div", { class: "thumb" }, photoUrl(b.photoPath) ? h("img", { src: photoUrl(b.photoPath), alt: "" }) : h("div", { class: "placeholder-photo" }, icon(cls.category || "Car", "1.2"))),
+        h("div", { class: "thumb" }, photoUrl(b.photoPath) ? h("img", { src: photoUrl(b.photoPath), alt: "" }) : h("div", { class: "placeholder-photo" }, icon(classIcon(cls), "1.2"))),
         h("div", null, h("b", null, cls.name), h("span", null, [cls.category, cls.seats != null && `${cls.seats} seats`, cls.bags != null && `${cls.bags} bags`].filter(Boolean).join(" \u00b7 ")),
           h("div", { style: { fontSize: "14px", marginTop: "2px" } }, b.name))),
       h("div", { class: "sum-dates" },
@@ -1315,7 +1323,7 @@ function checkoutView(id, b, cls, trip, days, backHref) {
     saveConfirmation({
       resCode: res.resCode, appToken: res.appToken || null,
       branch: { name: b.name, address: b.address, city: cityOf(b), timeZone: b.timeZone, photoPath: b.photoPath, logoPath: b.logoPath },
-      className: cls.name, category: cls.category, trip, days: res.days || days,
+      className: cls.name, category: cls.category, classIcon: classIcon(cls), trip, days: res.days || days,
       lines: qte.lines, taxLines: qte.taxLines, total: qte.total,
       firstName: form.first.trim(), phone: v.phone, email: form.email.trim(),
     });
@@ -1463,7 +1471,7 @@ function ConfirmedPage() {
         "Check in before you arrive to add your licence and sign, so pickup takes minutes. You can also open the app with your reservation code and last name.")),
     h("aside", { class: "book-box", style: { position: "static" } },
       h("div", { class: "summary-head" },
-        h("div", { class: "thumb" }, photoUrl(c.branch.photoPath) ? h("img", { src: photoUrl(c.branch.photoPath), alt: "" }) : h("div", { class: "placeholder-photo" }, icon(c.category || "Car", "1.2"))),
+        h("div", { class: "thumb" }, photoUrl(c.branch.photoPath) ? h("img", { src: photoUrl(c.branch.photoPath), alt: "" }) : h("div", { class: "placeholder-photo" }, icon(c.classIcon || c.category || "Car", "1.2"))),
         h("div", null, h("b", null, c.className), h("span", null, c.branch.name),
           c.branch.address && h("div", { style: { fontSize: "14px", color: "var(--ink-55)" } }, c.branch.address))),
       h("div", { class: "sum-dates" },
