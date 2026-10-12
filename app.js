@@ -658,7 +658,7 @@ function HomePage(q) {
       h("ol", { class: "steps" },
         stepItem("1", "search", "Search", "Tell us where and when. You'll only see locations with a vehicle available for your dates."),
         stepItem("2", "calendar", "Reserve", "Pick a vehicle and your coverages, confirm your number with a texted code, and you're booked."),
-        stepItem("3", "phone", "Pick up", "At pickup, tap the link we text you, scan your licence, photograph any damage and sign.")))),
+        stepItem("3", "phone", "Pick up", "At pickup, tap the link we text you, scan your license, photograph any damage and sign.")))),
 
     h("section", { class: "band" }, h("div", { class: "wrap" },
       h("span", { class: "kicker kicker-plain" }, "Why book on fleetr"),
@@ -666,7 +666,7 @@ function HomePage(q) {
         "Check-in and return are where rentals slow down. With fleetr, ",
         h("span", { class: "hl" }, "you do both on your phone"), "."),
       h("div", { class: "points" },
-        point("No line", "Your licence, coverages and signature are done on your phone, so pickup takes minutes, not a queue."),
+        point("No line", "Your license, coverages and signature are done on your phone, so pickup takes minutes, not a queue."),
         point("Return on your own", "Park, check in the vehicle on your phone and go. Your return time locks the moment you finish, so you never pay for waiting on staff."),
         point("Everything by text", "Your confirmation, reminders and check-in link all come by text. No app to download, no account to make.")))),
 
@@ -1158,7 +1158,7 @@ function checkoutView(id, b, cls, trip, days, backHref) {
       field("last", "Last name", { autocomplete: "family-name", maxlength: "60" }),
       field("phone", "Mobile phone", { type: "tel", autocomplete: "tel", inputmode: "tel", placeholder: "(709) 555-0100" }),
       field("email", "Email", { type: "email", autocomplete: "email", maxlength: "200" })),
-    h("p", { class: "hint" }, "Use the name on your driver's licence. We'll text your confirmation to this number."));
+    h("p", { class: "hint" }, "Use the name on your driver's license. We'll text your confirmation to this number."));
 
   // Coverages
   const covErr = h("div", { class: "err", role: "alert", style: { marginTop: "12px" } });
@@ -1463,7 +1463,7 @@ function ConfirmedPage() {
         h("a", { class: "btn btn-primary", href: appLink(c) }, icon("phone", "1.8"), "Check in with the app"),
         calWrap),
       h("p", { class: "hint", style: { maxWidth: "34em" } },
-        "Check in before you arrive to add your licence and sign, so pickup takes minutes. You can also open the app with your reservation code and last name.")),
+        "Check in before you arrive to add your license and sign, so pickup takes minutes. You can also open the app with your reservation code and last name.")),
     h("aside", { class: "book-box", style: { position: "static" } },
       h("div", { class: "summary-head" },
         h("div", { class: "thumb" }, photoUrl(c.branch.photoPath) ? h("img", { src: photoUrl(c.branch.photoPath), alt: "" }) : h("div", { class: "placeholder-photo" }, icon(c.classIcon || c.category || "Car", "1.2"))),
@@ -1730,7 +1730,7 @@ function RentalCompaniesPage(q) {
         h("h2", null, "The work that eats your team's day, handled.")),
       featureReel([
         ["globe", "Listed on fleetr.ai", "Renters find and book your vehicles on fleetr.ai. Every booking lands straight in your reservations."],
-        ["phone", "Customer check-in and return", "Customers scan their licence, photograph the vehicle, and sign on their own phone at pickup. At return, they log it themselves and the time is locked in. Your staff don't have to be there for either."],
+        ["phone", "Customer check-in and return", "Customers scan their license, photograph the vehicle, and sign on their own phone at pickup. At return, they log it themselves and the time is locked in. Your staff don't have to be there for either."],
         ["chat", "Automatic texts", "Confirmations, reminders, and no-show follow-ups go out on their own, in your wording. Your team stops chasing customers by phone."],
         ["spark", "Just ask", "Type or say what you need, like adding a reservation, fixing an agreement, or updating a vehicle, and fleetr does it."],
         ["shieldCheck", "Coverages sold every time", "Your coverages, wording, and prices, offered the same way on every rental. Every choice the customer makes is recorded."],
@@ -1779,7 +1779,7 @@ function DealershipsPage() {
         h("h2", null, "Everything you need to rent, without becoming a rental company.")),
       featureReel([
         ["globe", "Listed on fleetr.ai", "Renters find and book your vehicles on fleetr.ai. No advertising on your end."],
-        ["phone", "Customer check-in and return", "Customers scan their licence, photograph the vehicle, and sign on their own phone at pickup. At return, they log it themselves and the time is locked in. Your staff don't have to be there for either."],
+        ["phone", "Customer check-in and return", "Customers scan their license, photograph the vehicle, and sign on their own phone at pickup. At return, they log it themselves and the time is locked in. Your staff don't have to be there for either."],
         ["document", "Contracts and signatures", "Every rental gets a proper agreement, signed on the customer's phone. No paper to file."],
         ["camera", "Damage protection", "Timestamped photos at pickup and return. Any damage becomes a claim with the photos attached."],
         ["key", "You choose what rents", "Pull a vehicle off rent the moment it sells or needs work."],
@@ -1835,11 +1835,11 @@ function checkinWalkthrough() {
       ...field("Plate Province / State", "NL - Newfoundland & Labrador"),
       el("ca-spacer"),
       btn("Start Rental Process"))],
-    ["Scan the licence", el("ca-screen ca-camera",
+    ["Scan the license", el("ca-screen ca-camera",
       el("ca-frame",
         el("ca-licence", el("ca-lic-photo"), el("ca-lic-lines", h("span"), h("span"), h("span"), h("span"))),
         h("span", { class: "ca-scanline" })),
-      el("ca-camera-text", "Scanning licence"))],
+      el("ca-camera-text", "Scanning license"))],
     ["Add drivers", el("ca-screen",
       ...steps(3),
       h("h4", null, "Drivers"),
@@ -1990,9 +1990,9 @@ const LEGAL = {
       ["What we collect", [
         "When you search on fleetr.ai: the place, dates and vehicle types you search for. If a search finds no vehicles, we save the search, without anything that identifies you, so rental companies can see demand.",
         "When you book: your first and last name, mobile phone number, email address, and the coverages you choose. We verify your phone number with a texted code.",
-        "When you check in or return a vehicle: your reservation code and last name, the vehicle's plate, your driver's licence details (name, licence number, date of birth, issue and expiry dates, and address) and those of any other driver, photos of the vehicle, your coverage choices and acknowledgements, your signature, and at return, the odometer reading, fuel level, any new damage, and where the vehicle was left.",
+        "When you check in or return a vehicle: your reservation code and last name, the vehicle's plate, your driver's license details (name, license number, date of birth, issue and expiry dates, and address) and those of any other driver, photos of the vehicle, your coverage choices and acknowledgements, your signature, and at return, the odometer reading, fuel level, any new damage, and where the vehicle was left.",
         "When you contact us: your name, email address and message.",
-        "Your licence barcode is read on your own phone. The camera image is not sent anywhere for scanning.",
+        "Your license barcode is read on your own phone. The camera image is not sent anywhere for scanning.",
       ]],
       ["How we use it", [
         "To create and manage your booking, verify your phone number, and send texts about your rental, such as your confirmation, check-in link, reminders and return notices.",
@@ -2021,7 +2021,7 @@ const LEGAL = {
         "Our database and photos are stored in the United States, with Supabase on Amazon Web Services. Information stored outside Canada may be accessible to authorities in that country under its laws.",
       ]],
       ["How long we keep it", [
-        "Licence details, photos, signatures and other personal information for a rental are deleted automatically 1 year after the rental is fully closed, meaning no balance is owed and no damage claim is open. A rental company may keep a rental from being deleted for longer if it is needed for a dispute, insurance claim or legal requirement.",
+        "License details, photos, signatures and other personal information for a rental are deleted automatically 1 year after the rental is fully closed, meaning no balance is owed and no damage claim is open. A rental company may keep a rental from being deleted for longer if it is needed for a dispute, insurance claim or legal requirement.",
         "Phone verification records and verification code texts are deleted after 30 days.",
         "Deleted information may remain in backups for up to 7 days.",
         "Contact form messages are kept as long as needed to respond.",
@@ -2049,14 +2049,14 @@ const LEGAL = {
       ["Booking", [
         "Prices shown are set by the rental company and shown before tax. Nothing is charged online. You pay the rental company at pickup, under its payment terms.",
         "You must give accurate information and a mobile number you control. We verify it with a texted code.",
-        "The rental company may require you to meet its own conditions at pickup, such as age, a valid driver's licence and a payment method, and may refuse a rental if you don't.",
+        "The rental company may require you to meet its own conditions at pickup, such as age, a valid driver's license and a payment method, and may refuse a rental if you don't.",
         "Your booking is confirmed by text with a reservation code and a check-in link.",
       ]],
       ["Cancelling", [
         "You can cancel for free any time before pickup using the link in your confirmation text.",
       ]],
       ["Check-in and return", [
-        "At pickup, you'll use the check-in app to scan your licence, photograph the vehicle, choose or confirm coverages, and sign your rental agreement with the rental company. At return, you may be asked to record the odometer, fuel and any new damage. Photos and information you submit form part of your rental record. Make sure they're accurate.",
+        "At pickup, you'll use the check-in app to scan your license, photograph the vehicle, choose or confirm coverages, and sign your rental agreement with the rental company. At return, you may be asked to record the odometer, fuel and any new damage. Photos and information you submit form part of your rental record. Make sure they're accurate.",
       ]],
       ["Texts", [
         "By booking, you agree to receive texts about your booking and rental. Reply STOP to any text to opt out.",
