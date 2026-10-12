@@ -1042,17 +1042,10 @@ function branchView(id, res, trip, q) {
       }))
     : h("p", null, "Open every day.");
 
-  const otherPrices = classes.map((c) => Number(c.otherDriverPrice)).filter((n) => Number.isFinite(n) && n > 0);
-  const otherDriverText = chosen && Number(chosen.otherDriverPrice) > 0
-    ? `${money(chosen.otherDriverPrice, true)} per day for each additional driver on the ${chosen.name}, added at pickup.`
-    : otherPrices.length
-      ? `From ${money(Math.min(...otherPrices), true)} per day for each additional driver, added at pickup.`
-      : "Additional drivers can be added at pickup.";
   const facts = [
     b.minimumAge != null && { icon: "id", name: "Minimum age", text: `${b.minimumAge} years old` },
     b.deposit != null && Number(b.deposit) > 0 && { icon: "deposit", name: "Deposit", text: `${money(b.deposit, true)}, held at pickup` },
     b.paymentMethods && b.paymentMethods.length && { icon: "card", name: "Payment", text: b.paymentMethods.join(", ") },
-    { icon: "driver", name: "Additional drivers", text: otherDriverText },
   ].filter(Boolean);
 
   const mapEl = h("div", { class: "branch-map map" });
@@ -1851,7 +1844,7 @@ function checkinWalkthrough() {
       ...steps(3),
       h("h4", null, "Drivers"),
       h("p", { class: "ca-sub" }, "Only drivers named on the rental agreement may drive the vehicle."),
-      el("ca-card", el("ca-card-head", h("b", null, "Add another driver?"), h("span", null, "$10.00 per day")),
+      el("ca-card", el("ca-card-head", h("b", null, "Add another driver?")),
         el("ca-choices", btn("Yes", "ca-btn-line"), btn("No"))),
       el("ca-spacer"),
       btn("Continue →"))],
