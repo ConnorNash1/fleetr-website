@@ -854,6 +854,43 @@
   .ca-camera-text { color: var(--paper); font-size: 16px; font-weight: 600; }
   @media (prefers-reduced-motion: reduce) { .ca-track { transition: none; } .ca-sig path { stroke-dashoffset: 0; } }
 
+  /* The mock app in the terracotta theme the app now uses: white cards and
+     fields, terracotta accents, the step just reached filling in, choices as
+     radio cards and the summary as a ticket. */
+  .ca-input { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); }
+  .ca-card, .ca-vehicle, .ca-info, .ca-damage { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); box-shadow: 0 1px 2px rgba(31, 30, 29, .05); }
+  .ca-info { box-shadow: inset 3px 0 0 var(--terra), 0 1px 2px rgba(31, 30, 29, .05); }
+  .ca-damage::before { background: var(--terra); }
+  .ca-photo { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); }
+  .ca-step-label, .ca-back, .ca-manual { color: #C9603D; }
+  .ca-manual { text-decoration-color: var(--terra); }
+  .ca-btn-primary.tap { background: #EE7550; }
+  .ca-step-bar span { height: 6px; border-radius: 999px; background: rgba(31, 30, 29, .12); }
+  .ca-step-bar span.on:not(:has(+ .on)) { background: rgba(31, 30, 29, .12) linear-gradient(var(--terra), var(--terra)) left / 0% 100% no-repeat; }
+  .ca-screen.on .ca-step-bar span.on:not(:has(+ .on)) { animation: ca-seg-fill .5s .3s cubic-bezier(.4, 0, .2, 1) forwards; }
+  @keyframes ca-seg-fill { to { background-size: 100% 100%; } }
+  .ca-radio { display: flex; align-items: center; justify-content: center; gap: 10px; background: #FFFFFF; border: 1.5px solid rgba(31, 30, 29, .12); }
+  .ca-radio::before { content: ""; flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(31, 30, 29, .3); background: #FFFFFF; }
+  .ca-radio.on { border-color: var(--terra); background: rgba(244, 132, 95, .14); }
+  .ca-radio.on::before { border-color: var(--terra); background: radial-gradient(circle, var(--terra) 0 4px, #FFFFFF 4.5px); }
+  .ca-summary { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); }
+  .ca-ticket {
+    --notch: 44px; box-shadow: none; padding-top: 0;
+    -webkit-mask: radial-gradient(circle 10px at 0 var(--notch), transparent 97%, #000), radial-gradient(circle 10px at 100% var(--notch), transparent 97%, #000);
+    -webkit-mask-composite: source-in;
+    mask: radial-gradient(circle 10px at 0 var(--notch), transparent 97%, #000), radial-gradient(circle 10px at 100% var(--notch), transparent 97%, #000);
+    mask-composite: intersect;
+  }
+  .ca-ticket::before {
+    content: "Rental summary"; display: block; height: var(--notch); line-height: calc(var(--notch) - 2px);
+    margin: 0 -18px 4px; padding: 0 18px; background: rgba(244, 132, 95, .14);
+    border-bottom: 2px dashed rgba(31, 30, 29, .18);
+    color: #C9603D; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  }
+  .ca-screen.on .ca-ticket { animation: ca-ticket-in .5s .45s cubic-bezier(.2, .8, .2, 1) both; }
+  @keyframes ca-ticket-in { from { opacity: 0; transform: translateY(12px); } }
+  @media (prefers-reduced-motion: reduce) { .ca-screen.on .ca-step-bar span.on:not(:has(+ .on)) { animation: none; background-size: 100% 100%; } .ca-screen.on .ca-ticket { animation: none; } }
+
   /* Book a demo dialog */
   .demo-dialog { width: min(480px, calc(100% - 32px)); max-height: calc(100% - 32px); margin: auto; padding: 0; border: 1px solid var(--rule); border-radius: var(--r-lg); background: var(--paper); color: var(--ink); box-shadow: var(--shadow-lg); }
   .demo-dialog::backdrop { background: rgba(31, 30, 29, 0.45); }

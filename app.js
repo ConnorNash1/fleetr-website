@@ -1815,6 +1815,8 @@ function checkinWalkthrough() {
   const el = (cls, ...kids) => h("div", { class: cls }, ...kids);
   const field = (label, value) => [h("span", { class: "ca-label" }, label), el("ca-input", value)];
   const btn = (text, cls = "ca-btn-primary") => el("ca-btn " + cls, text);
+  // A choice as the app draws it: a card with a radio mark, terracotta when picked.
+  const radio = (text, on) => el("ca-btn ca-radio" + (on ? " on" : ""), text);
   const steps = (n) => [
     el("ca-back", "← Back"),
     el("ca-step-label", `Step ${n} of ${SCREENS}`),
@@ -1823,7 +1825,7 @@ function checkinWalkthrough() {
   const choice = (name, price, wording, picked) => el("ca-card",
     el("ca-card-head", h("b", null, name), h("span", null, price)),
     wording && h("p", null, wording),
-    el("ca-choices", btn("Accept", picked === 0 ? "ca-btn-primary" : "ca-btn-line"), btn("Decline", picked === 1 ? "ca-btn-primary" : "ca-btn-line")));
+    el("ca-choices", radio("Accept", picked === 0), radio("Decline", picked === 1)));
 
   const screens = [
     ["Open the texted link", el("ca-screen",
@@ -1845,7 +1847,7 @@ function checkinWalkthrough() {
       h("h4", null, "Drivers"),
       h("p", { class: "ca-sub" }, "Only drivers named on the rental agreement may drive the vehicle."),
       el("ca-card", el("ca-card-head", h("b", null, "Add another driver?")),
-        el("ca-choices", btn("Yes", "ca-btn-line"), btn("No"))),
+        el("ca-choices", radio("Yes", false), radio("No", true))),
       el("ca-spacer"),
       btn("Continue →"))],
     ["Check the damage on file", el("ca-screen",
@@ -1892,7 +1894,7 @@ function checkinWalkthrough() {
       doneTick(),
       h("h4", null, "You're Good to Go!"),
       h("p", { class: "ca-sub" }, "Your inspection is complete and on file. Enjoy your rental."),
-      el("ca-summary", row("Vehicle", "Make and model"), row("Plate", "ABC123"), row("Return by", "Oct 11, 9:00 AM")),
+      el("ca-summary ca-ticket", row("Vehicle", "Make and model"), row("Plate", "ABC123"), row("Return by", "Oct 11, 9:00 AM")),
       el("ca-spacer"),
       btn("Done"))],
   ];
