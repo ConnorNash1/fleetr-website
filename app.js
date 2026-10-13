@@ -1463,7 +1463,7 @@ function ConfirmedPage() {
         h("a", { class: "btn btn-primary", href: appLink(c) }, icon("phone", "1.8"), "Check in with the app"),
         calWrap),
       h("p", { class: "hint", style: { maxWidth: "34em" } },
-        "Check in before you arrive to add your license and sign, so pickup takes minutes. You can also open the app with your reservation code and last name.")),
+        "At pickup, open the app to scan your license, check the vehicle, and sign. You can also open it with your reservation code and last name.")),
     h("aside", { class: "book-box", style: { position: "static" } },
       h("div", { class: "summary-head" },
         h("div", { class: "thumb" }, photoUrl(c.branch.photoPath) ? h("img", { src: photoUrl(c.branch.photoPath), alt: "" }) : h("div", { class: "placeholder-photo" }, icon(c.classIcon || c.category || "Car", "1.2"))),
