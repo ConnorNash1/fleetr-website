@@ -68,6 +68,19 @@ const ICONS = {
   document: '<path d="M6 3h8.5L19 7.5V21H6z"/><path d="M14.5 3v4.5H19M9 12h7M9 15.5h7M9 9h3"/>',
   globe:    '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 3.5 5.4 3.5 8.5s-1 5.9-3.5 8.5c-2.5-2.6-3.5-5.4-3.5-8.5s1-5.9 3.5-8.5z"/>',
 };
+// The branch page's own set, one style throughout: Lucide's outline icons
+// (lucide.dev, ISC licence).
+Object.assign(ICONS, {
+  lPlane:     '<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+  lTruck:     '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
+  lMoon:      '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  lId:        '<path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/>',
+  lWallet:    '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  lCard:      '<rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>',
+  lNav:       '<path d="M3 11 22 2l-9 19-2-8z"/>',
+  lArrowLeft: '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  lChevron:   '<path d="m6 9 6 6 6-6"/>',
+});
 function icon(name, strokeWidth) {
   const t = document.createElement("template");
   const vehicle = VEHICLES[name];
@@ -246,9 +259,9 @@ function quoteLines(q) {
 const cityOf = (b) => (b.citiesServed && b.citiesServed[0]) || (b.airportCodes && b.airportCodes[0]) || "";
 function perksOf(b) {
   const out = [];
-  if (b.airportPickup) out.push({ icon: "plane", name: "Airport pickup", text: b.airportCodes && b.airportCodes.length ? `At ${b.airportCodes.join(", ")}` : "Picked up at the airport" });
-  if (b.delivery) out.push({ icon: "delivery", name: "Delivery", text: "They can bring the vehicle to you" });
-  if (b.afterHoursDropoff) out.push({ icon: "moon", name: "After-hours drop-off", text: "Return outside opening hours" });
+  if (b.airportPickup) out.push({ icon: "lPlane", name: "Airport pickup", text: b.airportCodes && b.airportCodes.length ? `At ${b.airportCodes.join(", ")}` : "Picked up at the airport" });
+  if (b.delivery) out.push({ icon: "lTruck", name: "Delivery", text: "They can bring the vehicle to you" });
+  if (b.afterHoursDropoff) out.push({ icon: "lMoon", name: "After-hours drop-off", text: "Return outside opening hours" });
   return out;
 }
 const HOURS_DAYS = [["mon", "Monday"], ["tue", "Tuesday"], ["wed", "Wednesday"], ["thu", "Thursday"], ["fri", "Friday"], ["sat", "Saturday"], ["sun", "Sunday"]];
@@ -753,6 +766,7 @@ function SearchPage(q) {
   const category = cats.join(",");
   let sort = q.get("sort") || "recommended";
   const params = (extra) => ({ ...searchParams({ where, trip, category }), sort: sort === "recommended" ? null : sort, ...extra });
+  const backTo = () => ({ where, sort: sort === "recommended" ? null : sort });
   const place = placeName(where);
 
   const pill = SearchPill({ where, trip, category, compact: true, onSearch: (s) => go("/search", { ...searchParams(s), sort: params().sort }) });
@@ -797,7 +811,7 @@ function SearchPage(q) {
         h("div", { style: { fontFamily: "var(--display)", fontSize: "18px" } }, b.name),
         h("div", { style: { color: "var(--ink-55)" } }, cityOf(b)),
         h("div", { style: { margin: "6px 0 10px" } }, "from ", h("b", null, `${dayRate(b.lowestDailyRate)}/day`)),
-        h("a", { href: branchHref(b.locationId, trip, category), class: "link-arrow" }, "See vehicles")));
+        h("a", { href: branchHref(b.locationId, trip, category, null, backTo()), class: "link-arrow" }, "See vehicles")));
       marker.on("mouseover", () => hot(b.locationId, true));
       marker.on("mouseout", () => hot(b.locationId, false));
       // The branch whose popup is open stays dark until it closes.
@@ -893,7 +907,7 @@ function SearchPage(q) {
           const perks = perksOf(b);
           // A row: the logo, then the company, its branch and city and the
           // perks, then the price on the right.
-          const card = h("a", { class: "card", href: branchHref(b.locationId, trip, category),
+          const card = h("a", { class: "card", href: branchHref(b.locationId, trip, category, null, backTo()),
             onmouseenter: () => hot(b.locationId, true), onmouseleave: () => hot(b.locationId, false) },
             logoBlock(b, "card-mark"),
             h("div", { class: "card-body" },
@@ -926,10 +940,14 @@ function SearchPage(q) {
   return page;
 }
 
-function branchHref(id, trip, category, cls) {
+// back: the search the renter came from ({ where, sort }), so the branch
+// page can link back to the same results.
+function branchHref(id, trip, category, cls, back) {
   const qs = new URLSearchParams({ pu: tripPu(trip), rt: tripRt(trip) });
   if (category) qs.set("cat", category);
   if (cls) qs.set("cls", cls);
+  if (back && back.where) qs.set("where", back.where);
+  if (back && back.sort) qs.set("sort", back.sort);
   return `#/branch/${encodeURIComponent(id)}?${qs}`;
 }
 
@@ -956,21 +974,58 @@ function BranchPage(id, q) {
   return root;
 }
 
+// Opening hours as a few rows: days in a row with the same hours share one
+// ("Mon–Fri"). Each row lists its day keys, so today's can be marked.
+const HOURS_SHORT = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+function hoursRows(hours) {
+  const rows = [];
+  HOURS_DAYS.forEach(([k]) => {
+    const d = hours[k];
+    const text = d && d.open && d.close ? `${fmtTime(String(d.open).slice(0, 5))} – ${fmtTime(String(d.close).slice(0, 5))}` : "Closed";
+    const last = rows[rows.length - 1];
+    if (last && last.text === text) last.keys.push(k); else rows.push({ keys: [k], text });
+  });
+  return rows.map((r) => ({ ...r, label: r.keys.length === 1 ? HOURS_SHORT[r.keys[0]] : `${HOURS_SHORT[r.keys[0]]}–${HOURS_SHORT[r.keys[r.keys.length - 1]]}` }));
+}
+// Whether the branch is open right now, in its own time zone, or null when
+// that cannot be told.
+function openNow(hours, tz) {
+  try {
+    const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: tz || undefined })
+      .formatToParts(new Date()).map((x) => [x.type, x.value]));
+    const d = hours[p.weekday.slice(0, 3).toLowerCase()];
+    if (!d || !d.open || !d.close) return false;
+    const now = `${p.hour}:${p.minute}`;
+    return now >= String(d.open).slice(0, 5) && now < String(d.close).slice(0, 5);
+  } catch (e) { return null; }
+}
+// Directions in the phone's own maps app: Apple Maps on an iPhone or iPad,
+// Google Maps everywhere else.
+function directionsUrl(b) {
+  const to = encodeURIComponent(b.address || `${b.latitude},${b.longitude}`);
+  const apple = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return apple ? `https://maps.apple.com/?daddr=${to}` : `https://www.google.com/maps/dir/?api=1&destination=${to}`;
+}
+const featureTile = (f) => h("div", { class: "feature-tile" }, h("span", { class: "ft-icon" }, icon(f.icon, "1.8")), h("div", null, h("b", null, f.name), h("span", null, f.text)));
+
 function branchView(id, res, trip, q) {
   const b = res.branch;
   const classes = res.classes || [];
   const wantCats = catList(q.get("cat"));
   const wantCat = wantCats.join(",");
-  let chosen = classes.find((c) => c.classId === q.get("cls")) || null;
+  const back = { where: q.get("where") || "", sort: q.get("sort") || null };
   const days = res.days || rentalDays(tripPu(trip), tripRt(trip));
   const taxes = b.salesTaxes || [];
 
-  // Classes, the chosen categories first.
-  const ordered = wantCats.length
-    ? [...classes.filter((c) => classTypes(c).some((t) => wantCats.includes(t))), ...classes.filter((c) => !classTypes(c).some((t) => wantCats.includes(t)))]
-    : classes;
+  // The vehicle types the renter searched for; the rest wait under See other
+  // options. A search for All types shows everything. One match is chosen for
+  // them.
+  const fits = (c) => !wantCats.length || classTypes(c).some((t) => wantCats.includes(t));
+  const matches = classes.filter(fits), others = classes.filter((c) => !fits(c));
+  let chosen = classes.find((c) => c.classId === q.get("cls")) || (matches.length === 1 ? matches[0] : null);
+
   const rows = {};
-  const classList = h("div", { class: "classes" }, ordered.map((c) => {
+  const classRow = (c) => {
     const row = h("button", { type: "button", class: "class-row", "aria-pressed": "false", onclick: () => choose(c) },
       h("div", { class: "class-icon" }, icon(classIcon(c), "1.5")),
       h("div", null,
@@ -982,112 +1037,101 @@ function branchView(id, res, trip, q) {
       h("div", { class: "class-price" }, h("b", null, `${dayRate(c.dailyRate)}/day`), h("span", null, `${money(c.total, true)} total`)));
     rows[c.classId] = row;
     return row;
-  }));
+  };
+  const vehiclesEl = h("div", null,
+    matches.length > 0 && h("div", { class: "classes" }, matches.map(classRow)),
+    !matches.length && others.length > 0 && h("p", null, `No ${orList(wantCats.map((c) => CATEGORY_NOUN[c]))} is free here for these dates.`),
+    others.length > 0 && h("details", { class: "other-options", open: chosen && others.includes(chosen) ? "open" : null },
+      h("summary", null, "See other options", h("span", { class: "oo-count" }, String(others.length)), icon("lChevron", "1.8")),
+      h("div", { class: "classes" }, others.map(classRow))));
 
-  const box = h("aside", { class: "book-box", "aria-label": "Reserve" });
+  const box = h("aside", { class: "book-box", "aria-label": "Your rental" });
   const bar = h("div", { class: "book-bar" });
   const choose = (c) => {
     chosen = c;
     Object.entries(rows).forEach(([k, r]) => { r.classList.toggle("chosen", k === c.classId); r.setAttribute("aria-pressed", String(k === c.classId)); });
-    history.replaceState(null, "", branchHref(id, trip, wantCat, c.classId));
+    history.replaceState(null, "", branchHref(id, trip, wantCat, c.classId, back));
     drawBox();
   };
   const reserve = () => {
-    if (!chosen) { classList.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+    if (!chosen) { vehiclesEl.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
     go(`/checkout/${encodeURIComponent(id)}`, { pu: tripPu(trip), rt: tripRt(trip), cls: chosen.classId });
   };
-  const draftTrip = { ...trip };
-  let cal = null;
-  const closeCal = () => { if (cal) { cal.remove(); cal = null; } };
-  const applyDates = () => {
-    closeCal();
-    if (!draftTrip.puDate || !draftTrip.rtDate || tripRt(draftTrip) <= tripPu(draftTrip)) return;
-    if (tripPu(draftTrip) === tripPu(trip) && tripRt(draftTrip) === tripRt(trip)) return;
-    location.hash = branchHref(id, draftTrip, wantCat, chosen && chosen.classId);
-  };
+  // The booking card: a summary of the vehicle chosen, or a prompt to choose
+  // one. On a phone, the bar along the bottom of the screen.
   const drawBox = () => {
-    closeCal();
-    const fields = h("div", { class: "bb-fields" },
-      h("div", { class: "bb-dates" },
-        h("button", { type: "button", class: "bb-field", onclick: (e) => openCal(e, "start") }, h("small", null, "Pick-up"), h("span", null, `${fmtShort(trip.puDate)}, ${fmtTime(trip.puTime)}`)),
-        h("button", { type: "button", class: "bb-field", onclick: (e) => openCal(e, "end") }, h("small", null, "Return"), h("span", null, `${fmtShort(trip.rtDate)}, ${fmtTime(trip.rtTime)}`))),
-      classes.length > 0 && h("label", { class: "bb-class" }, h("small", null, "Vehicle"),
-        h("select", { onchange: (e) => { const c = classes.find((x) => x.classId === e.target.value); if (c) choose(c); } },
-          !chosen && h("option", { value: "", selected: "selected" }, "Choose a vehicle"),
-          classes.map((c) => h("option", { value: c.classId, selected: chosen && chosen.classId === c.classId ? "selected" : null }, `${c.name} \u00b7 ${dayRate(c.dailyRate)}/day`)))));
-    const openCal = (e, focus) => {
-      e.stopPropagation();
-      if (cal) { cal.setFocus(focus); return; }
-      cal = Calendar({ trip: draftTrip, focus, onChange: () => {}, onDone: applyDates });
-      fields.append(cal);
-    };
-    const qte = chosen && quote(chosen, days, [], taxes);
-    const lowest = classes.length ? Math.min(...classes.map((c) => Number(c.dailyRate))) : null;
-    set(box, 
-      h("div", { class: "bb-price" }, chosen ? dayRate(chosen.dailyRate) : (lowest != null ? `from ${dayRate(lowest)}` : "Not available"), (chosen || lowest != null) && h("span", null, "/day")),
-      fields,
-      h("button", { type: "button", class: "btn btn-primary btn-block", disabled: !classes.length, onclick: reserve }, chosen ? "Reserve" : "Choose a vehicle"),
-      h("p", { class: "bb-note" }, "You won't be charged now. Pay at pickup."),
-      qte && quoteLines(qte),
-      qte && h("p", { class: "bb-note", style: { fontSize: "13px" } }, "Coverages are chosen at checkout."));
-    set(bar, 
-      h("div", null,
-        h("b", null, chosen ? `${money(qte.total, true)} total` : (lowest != null ? `from ${dayRate(lowest)}/day` : "Not available")),
-        h("small", null, tripRange(trip))),
-      h("button", { type: "button", class: "btn btn-primary", disabled: !classes.length, onclick: reserve }, chosen ? "Reserve" : "Choose"));
+    if (!chosen) {
+      set(box,
+        h("div", { class: "bb-title" }, "Select a vehicle"),
+        h("p", { class: "bb-hint" }, classes.length ? "Choose a vehicle to see your total." : "Nothing is free for these dates."));
+      set(bar,
+        h("div", null, h("b", null, "Select a vehicle"), h("small", null, tripRange(trip))),
+        classes.length > 0 && h("button", { type: "button", class: "btn btn-primary", onclick: reserve }, "Choose"));
+      return;
+    }
+    const qte = quote(chosen, days, [], taxes);
+    const line = (label, value) => h("div", null, h("dt", null, label), h("dd", null, value));
+    set(box,
+      h("div", { class: "bb-title" }, chosen.name),
+      h("dl", { class: "bb-summary" },
+        line("Pick-up", `${fmtDay(trip.puDate)}, ${fmtTime(trip.puTime)}`),
+        line("Return", `${fmtDay(trip.rtDate)}, ${fmtTime(trip.rtTime)}`),
+        line("Days", String(days)),
+        line("Daily rate", `${dayRate(chosen.dailyRate)}/day`),
+        qte.taxLines.length ? qte.taxLines.map((t) => line(t.label, money(t.amount, true))) : line("Tax", "None")),
+      h("div", { class: "bb-total" }, h("span", null, "Total"), h("b", null, money(qte.total, true))),
+      h("button", { type: "button", class: "btn btn-primary btn-block", onclick: reserve }, "Reserve"),
+      h("p", { class: "bb-note" }, "You won't be charged now. Pay at pickup."));
+    set(bar,
+      h("div", null, h("b", null, `${money(qte.total, true)} total`), h("small", null, `${chosen.name} · ${days} day${days === 1 ? "" : "s"}`)),
+      h("button", { type: "button", class: "btn btn-primary", onclick: reserve }, "Reserve"));
   };
-  const outside = (e) => { if (cal && !box.contains(e.target)) applyDates(); };
-  document.addEventListener("click", outside);
-  onCleanup(() => document.removeEventListener("click", outside));
   drawBox();
   if (chosen) choose(chosen);
 
-  // Hours, today in the branch's own time zone first in weight.
+  // Hours: a few rows, today's marked, and whether it is open now.
   const hours = b.hours && typeof b.hours === "object" ? b.hours : null;
   const tk = todayKey(b.timeZone);
-  const hoursEl = hours
-    ? h("div", { class: "hours" }, HOURS_DAYS.map(([k, name]) => {
-        const d = hours[k];
-        const open = d && d.open && d.close;
-        return [h("span", { class: k === tk ? "today" : null }, name),
-                h("span", { class: `${k === tk ? "today" : ""} ${open ? "" : "closed"}` }, open ? `${fmtTime(String(d.open).slice(0, 5))} \u2013 ${fmtTime(String(d.close).slice(0, 5))}` : "Closed")];
-      }))
-    : h("p", null, "Open every day.");
+  const open = hours ? openNow(hours, b.timeZone) : null;
 
   const facts = [
-    b.minimumAge != null && { icon: "id", name: "Minimum age", text: `${b.minimumAge} years old` },
-    b.deposit != null && Number(b.deposit) > 0 && { icon: "deposit", name: "Deposit", text: `${money(b.deposit, true)}, held at pickup` },
-    b.paymentMethods && b.paymentMethods.length && { icon: "card", name: "Payment", text: b.paymentMethods.join(", ") },
+    b.minimumAge != null && { icon: "lId", name: "Minimum age", text: `${b.minimumAge} years old` },
+    b.deposit != null && Number(b.deposit) > 0 && { icon: "lWallet", name: "Deposit", text: `${money(b.deposit, true)}, held at pickup` },
+    b.paymentMethods && b.paymentMethods.length && { icon: "lCard", name: "Payment", text: b.paymentMethods.join(", ") },
   ].filter(Boolean);
 
   const mapEl = h("div", { class: "branch-map map" });
-  const photo = photoBlock(b, "about-photo");
+  const photo = photoBlock(b, "pickup-photo");
   const perks = perksOf(b);
+  const backHref = `#/search?${new URLSearchParams(Object.entries({ ...searchParams({ where: back.where, trip, category: wantCat }), sort: back.sort })
+    .filter(([, v]) => v != null && v !== "")).toString()}`;
   const content = h("div", { class: "branch-main" },
     res.reason && h("div", { class: "notice", role: "alert", style: { marginBottom: "28px" } }, `${reasonText(res.reason)}${res.reason === "too_soon" ? ` This branch needs ${b.minNoticeHours} hour${b.minNoticeHours === 1 ? "" : "s"} notice.` : ""}${res.reason === "too_long" ? ` The longest rental here is ${b.maxRentalDays} days.` : ""}`),
     h("section", { class: "sec", id: "vehicles" },
       h("h2", null, "Available for your dates"),
-      h("p", { class: "sec-sub" }, `${tripRange(trip)} \u00b7 ${days} day${days === 1 ? "" : "s"} \u00b7 prices before tax`),
-      classes.length ? classList : h("p", null, res.reason ? "Change your dates to see what's available." : "Nothing is free for these dates. Try different dates.")),
-    // The location photo, at a moderate size beside the description, the
-    // hours and where to pick up.
-    h("section", { class: "sec" }, h("h2", null, "About this branch"),
-      h("div", { class: `about${photo ? " with-photo" : ""}` },
-        h("div", { class: "about-text" },
-          b.description && h("p", { class: "about-desc" }, b.description),
-          h("h3", null, "Hours"), hoursEl,
-          (hasPin(b) || b.address) && h("h3", null, "Where you'll pick up"),
-          b.address && h("p", { style: { marginBottom: "8px" } }, b.address),
-          hasPin(b) && mapEl),
-        photo)),
+      h("p", { class: "sec-sub" }, `${tripRange(trip)} · ${days} day${days === 1 ? "" : "s"} · prices before tax`),
+      classes.length ? vehiclesEl : h("p", null, res.reason ? "Change your dates to see what's available." : "Nothing is free for these dates. Try different dates.")),
+    // The address, then the photo and the map side by side, then directions.
+    (b.address || hasPin(b) || photo) && h("section", { class: "sec" }, h("h2", null, "Where you'll pick up"),
+      b.address && h("p", { class: "pickup-address" }, b.address),
+      (photo || hasPin(b)) && h("div", { class: `pickup-media${photo && hasPin(b) ? " two" : ""}` }, photo, hasPin(b) && mapEl),
+      (b.address || hasPin(b)) && h("a", { class: "directions", href: directionsUrl(b), target: "_blank", rel: "noopener" }, icon("lNav", "1.8"), "Get directions")),
+    h("section", { class: "sec" },
+      h("div", { class: "sec-head" }, h("h2", null, "Hours"),
+        open != null && h("span", { class: `open-badge${open ? " is-open" : ""}` }, open ? "Open now" : "Closed now")),
+      hours
+        ? h("div", { class: "hours-compact" }, hoursRows(hours).map((r) => h("div", { class: `hrow${r.keys.includes(tk) ? " today" : ""}` },
+            h("span", null, r.label), h("span", { class: r.text === "Closed" ? "closed" : null }, r.text))))
+        : h("p", null, "Open every day.")),
     perks.length > 0 && h("section", { class: "sec" }, h("h2", null, "What this branch offers"),
-      h("div", { class: "perks two" }, perks.map((p) => h("div", { class: "perk" }, icon(p.icon, "1.5"), h("div", null, h("b", null, p.name), h("span", null, p.text)))))),
-    h("section", { class: "sec" }, h("h2", null, "Requirements"),
-      h("div", { class: "perks two" }, facts.map((f) => h("div", { class: "perk" }, icon(f.icon, "1.5"), h("div", null, h("b", null, f.name), h("span", null, f.text)))))));
+      h("div", { class: "tiles" }, perks.map(featureTile))),
+    facts.length > 0 && h("section", { class: "sec" }, h("h2", null, "Requirements"),
+      h("div", { class: "tiles" }, facts.map(featureTile))));
 
   const view = h("div", { class: "wrap" },
+    back.where && h("a", { class: "back-link", href: backHref }, icon("lArrowLeft", "1.8"), "Back to results"),
     // The logo, the company, then the branch and its address. Straight on to
-    // the vehicles and the booking box.
+    // the vehicles and the booking card.
     h("div", { class: "branch-head" },
       logoBlock(b, "branch-mark"),
       h("div", null,
