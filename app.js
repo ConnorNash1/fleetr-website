@@ -258,12 +258,22 @@ function todayKey(tz) {
     return wd.slice(0, 3).toLowerCase();
   } catch (e) { return ""; }
 }
+// The company and branch, as a result and the branch page title them: the
+// company's name first, then the branch. Before the company's name was sent,
+// the branch's name stood alone.
+const companyOf = (b) => b.company || b.name;
+const branchLine = (b, ...more) => [b.company ? b.name : null, ...more].filter(Boolean).join(" \u00b7 ");
+// The logo in a rounded square, or the company's first letter when it has none.
+function logoBlock(b, cls) {
+  const logo = photoUrl(b.logoPath);
+  return h("div", { class: `${cls}${logo ? "" : " no-logo"}` },
+    logo ? h("img", { src: logo, alt: `${companyOf(b)} logo`, loading: "lazy" })
+      : h("span", { "aria-hidden": "true" }, String(companyOf(b) || "?").trim().charAt(0).toUpperCase()));
+}
+// The location photo, at a moderate size in About this branch.
 function photoBlock(b, cls) {
   const url = photoUrl(b.photoPath);
-  const logo = photoUrl(b.logoPath);
-  return h("div", { class: cls },
-    url ? h("img", { src: url, alt: `${b.name}`, loading: "lazy" }) : h("div", { class: "placeholder-photo" }, icon("Car", "1")),
-    logo && h("div", { class: "card-logo" }, h("img", { src: logo, alt: `${b.name} logo`, loading: "lazy" })));
+  return url && h("div", { class: cls }, h("img", { src: url, alt: `${b.name}`, loading: "lazy" }));
 }
 
 // ─── Maps ────────────────────────────────────────────────────────────────────
@@ -689,10 +699,10 @@ function loadingShell(text, ...blocks) {
 }
 const skeletonResults = () => loadingShell("Finding vehicles\u2026",
   h("div", { class: "results-head" }, sk("sk-title", "62%"), sk("sk-line", "38%")),
-  h("div", { class: "cards" }, [0, 1, 2, 3].map(() => h("div", null,
-    h("div", { class: "sk card-photo" }), sk("sk-line", "70%"), sk("sk-line", "40%"), sk("sk-line", "100%")))));
+  h("div", { class: "cards" }, [0, 1, 2, 3].map(() => h("div", { class: "card" },
+    h("div", { class: "sk card-mark" }), h("div", null, sk("sk-line", "60%"), sk("sk-line", "40%")), sk("sk-line", "70px")))));
 const skeletonBranch = () => loadingShell("Loading\u2026",
-  sk("sk-line", "120px"), sk("sk-title", "55%"), sk("sk-line", "30%"), h("div", { class: "sk hero-photo" }),
+  h("div", { class: "branch-head" }, h("div", { class: "sk branch-mark" }), h("div", { style: { flex: "1" } }, sk("sk-title", "55%"), sk("sk-line", "30%"))),
   h("div", { class: "branch-cols" },
     h("div", null, sk("sk-title", "40%"), [0, 1, 2, 3].map(() => sk("sk-row"))),
     h("div", null, sk("sk-box"))));
@@ -881,16 +891,18 @@ function SearchPage(q) {
           h("p", null, `${tripRange(trip)} · ${days} day${days === 1 ? "" : "s"} · prices before tax`)),
         h("div", { class: "cards" }, open.map((b) => {
           const perks = perksOf(b);
+          // A row: the logo, then the company, its branch and city and the
+          // perks, then the price on the right.
           const card = h("a", { class: "card", href: branchHref(b.locationId, trip, category),
             onmouseenter: () => hot(b.locationId, true), onmouseleave: () => hot(b.locationId, false) },
-            photoBlock(b, "card-photo"),
+            logoBlock(b, "card-mark"),
             h("div", { class: "card-body" },
-              h("div", { class: "card-name" }, b.name),
-              h("div", { class: "card-sub" }, cityOf(b)),
-              perks.length > 0 && h("div", { class: "tags" }, perks.map((p) => h("span", { class: "tag" }, p.name))),
-              h("div", { class: "card-price" },
-                h("div", null, "from ", h("b", null, `${dayRate(b.lowestDailyRate)}/day`)),
-                h("span", null, `${money(b.total)} total`))));
+              h("div", { class: "card-name" }, companyOf(b)),
+              h("div", { class: "card-sub" }, branchLine(b, cityOf(b))),
+              perks.length > 0 && h("div", { class: "tags" }, perks.map((p) => h("span", { class: "tag" }, p.name)))),
+            h("div", { class: "card-price" },
+              h("div", null, "from ", h("b", null, `${dayRate(b.lowestDailyRate)}/day`)),
+              h("span", null, `${money(b.total)} total`)));
           cards[b.locationId] = card;
           return card;
         })));
@@ -1049,29 +1061,38 @@ function branchView(id, res, trip, q) {
   ].filter(Boolean);
 
   const mapEl = h("div", { class: "branch-map map" });
+  const photo = photoBlock(b, "about-photo");
   const perks = perksOf(b);
-  const content = h("div", null,
+  const content = h("div", { class: "branch-main" },
     res.reason && h("div", { class: "notice", role: "alert", style: { marginBottom: "28px" } }, `${reasonText(res.reason)}${res.reason === "too_soon" ? ` This branch needs ${b.minNoticeHours} hour${b.minNoticeHours === 1 ? "" : "s"} notice.` : ""}${res.reason === "too_long" ? ` The longest rental here is ${b.maxRentalDays} days.` : ""}`),
     h("section", { class: "sec", id: "vehicles" },
-      h("h2", null, "Free for your dates"),
+      h("h2", null, "Available for your dates"),
       h("p", { class: "sec-sub" }, `${tripRange(trip)} \u00b7 ${days} day${days === 1 ? "" : "s"} \u00b7 prices before tax`),
       classes.length ? classList : h("p", null, res.reason ? "Change your dates to see what's available." : "Nothing is free for these dates. Try different dates.")),
-    b.description && h("section", { class: "sec" }, h("h2", null, "About this branch"), h("p", null, b.description)),
+    // The location photo, at a moderate size beside the description, the
+    // hours and where to pick up.
+    h("section", { class: "sec" }, h("h2", null, "About this branch"),
+      h("div", { class: `about${photo ? " with-photo" : ""}` },
+        h("div", { class: "about-text" },
+          b.description && h("p", { class: "about-desc" }, b.description),
+          h("h3", null, "Hours"), hoursEl,
+          (hasPin(b) || b.address) && h("h3", null, "Where you'll pick up"),
+          b.address && h("p", { style: { marginBottom: "8px" } }, b.address),
+          hasPin(b) && mapEl),
+        photo)),
     perks.length > 0 && h("section", { class: "sec" }, h("h2", null, "What this branch offers"),
       h("div", { class: "perks two" }, perks.map((p) => h("div", { class: "perk" }, icon(p.icon, "1.5"), h("div", null, h("b", null, p.name), h("span", null, p.text)))))),
-    h("section", { class: "sec" }, h("h2", null, "Hours"), hoursEl),
     h("section", { class: "sec" }, h("h2", null, "Requirements"),
-      h("div", { class: "perks two" }, facts.map((f) => h("div", { class: "perk" }, icon(f.icon, "1.5"), h("div", null, h("b", null, f.name), h("span", null, f.text)))))),
-    (hasPin(b) || b.address) && h("section", { class: "sec" }, h("h2", null, "Where you'll pick up"),
-      b.address && h("p", { style: { marginBottom: "8px" } }, b.address),
-      hasPin(b) && mapEl));
+      h("div", { class: "perks two" }, facts.map((f) => h("div", { class: "perk" }, icon(f.icon, "1.5"), h("div", null, h("b", null, f.name), h("span", null, f.text)))))));
 
   const view = h("div", { class: "wrap" },
+    // The logo, the company, then the branch and its address. Straight on to
+    // the vehicles and the booking box.
     h("div", { class: "branch-head" },
-      h("span", { class: "kicker" }, cityOf(b) || "Branch"),
-      h("h1", null, b.name),
-      b.address && h("div", { class: "sub" }, b.address)),
-    photoBlock(b, "hero-photo"),
+      logoBlock(b, "branch-mark"),
+      h("div", null,
+        h("h1", null, companyOf(b)),
+        h("div", { class: "sub" }, branchLine(b, b.address)))),
     h("div", { class: "branch-cols" }, content, h("div", null, box)),
     bar);
 

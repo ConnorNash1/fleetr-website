@@ -394,8 +394,7 @@
   .results-head { margin-bottom: 24px; }
   .results-head h1 { font-size: clamp(26px, 3.2vw, 36px); line-height: 1.12; }
   .results-head p { color: var(--ink-55); margin-top: 6px; font-size: 15px; }
-  .cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 34px 26px; }
-  @media (min-width: 640px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; border-top: 1px solid var(--rule); }
   .results-map { display: none; position: sticky; top: var(--nav-h); height: calc(100vh - var(--nav-h)); padding: 18px 0 18px 26px; }
   .results-map .map { height: 100%; border-radius: var(--r-lg); border: 1px solid var(--rule); }
   @media (min-width: 1140px) { .results-map { display: block; } .map-toggle { display: none !important; } .empty-map { display: none; } }
@@ -428,21 +427,25 @@
   .branch-pin svg { display: block; width: 100%; height: 100%; }
   .here-pin { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--ink); border: 3px solid var(--paper); box-shadow: 0 0 0 1px var(--ink), 0 2px 6px rgba(31, 30, 29, 0.25); transform: translate(-50%, -50%); }
 
-  .card { display: block; text-decoration: none; color: var(--ink); }
-  .card-photo { position: relative; aspect-ratio: 4 / 3; border-radius: var(--r); overflow: hidden; background: var(--ink-06); }
-  .card-photo > img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.2, .7, .2, 1); }
-  .card:hover .card-photo > img { transform: scale(1.035); }
-  .card.hot .card-photo { box-shadow: 0 0 0 2px var(--ink); }
-  .card-logo { position: absolute; left: 12px; bottom: 12px; width: 50px; height: 50px; border-radius: 12px; background: var(--paper); box-shadow: var(--shadow); padding: 6px; display: flex; align-items: center; justify-content: center; }
-  .card-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
-  .card-body { padding-top: 14px; display: grid; gap: 3px; }
+  /* A result is a row: the logo, the company and its branch, the price. */
+  .card { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 18px 12px; border-bottom: 1px solid var(--rule); text-decoration: none; color: var(--ink); border-radius: var(--r); transition: background-color .12s; }
+  .card:hover, .card.hot { background: var(--ink-06); }
+  .card-mark, .branch-mark { width: 72px; height: 72px; flex: none; border-radius: 16px; background: var(--paper); border: 1px solid var(--rule); box-shadow: var(--shadow); padding: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .card-mark img, .branch-mark img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .no-logo { background: var(--ink-06); box-shadow: none; font-family: var(--display); font-size: 28px; font-weight: 600; color: var(--ink-70); }
+  .card-body { display: grid; gap: 3px; min-width: 0; }
   .card-name { font-family: var(--display); font-size: 21px; font-weight: 500; line-height: 1.2; }
   .card-sub { color: var(--ink-55); font-size: 14.5px; }
   .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-  .tag { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--ink-06); color: var(--ink-70); }
-  .card-price { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rule); font-size: 15px; }
+  .tag { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--paper); border: 1px solid var(--rule); color: var(--ink-70); }
+  .card-price { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; font-size: 15px; white-space: nowrap; }
   .card-price b { font-size: 17px; }
   .card-price span { color: var(--ink-55); font-size: 14px; }
+  @media (max-width: 519px) {
+    .card { grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; align-items: start; }
+    .card .card-mark { width: 56px; height: 56px; border-radius: 13px; padding: 6px; }
+    .card .card-price { grid-column: 2; flex-direction: row; align-items: baseline; justify-content: space-between; margin-top: 8px; }
+  }
   .placeholder-photo { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--ink-55); background: repeating-linear-gradient(135deg, var(--ink-06) 0 1px, transparent 1px 14px); }
   .placeholder-photo svg { width: 96px; height: 58px; opacity: .55; }
 
@@ -461,14 +464,19 @@
 
   /* ── Branch ───────────────────────────────────────── */
   .branch { padding: 30px 0 130px; }
-  .branch-head .kicker { margin-bottom: 14px; }
+  .branch-head { display: flex; align-items: center; gap: 20px; }
   .branch-head h1 { font-size: clamp(32px, 5vw, 56px); }
   .branch-head .sub { color: var(--ink-55); margin-top: 10px; }
-  .hero-photo { position: relative; margin-top: 26px; border-radius: var(--r-lg); overflow: hidden; aspect-ratio: 4 / 3; background: var(--ink-06); }
-  @media (min-width: 760px) { .hero-photo { aspect-ratio: 21 / 9; } }
-  .hero-photo > img { width: 100%; height: 100%; object-fit: cover; }
-  .hero-photo .card-logo { width: 72px; height: 72px; left: 20px; bottom: 20px; border-radius: 16px; padding: 9px; }
-  .hero-photo .placeholder-photo svg { width: 160px; height: 96px; }
+  @media (max-width: 519px) { .branch-head { align-items: flex-start; gap: 14px; } .branch-head .branch-mark { width: 56px; height: 56px; border-radius: 13px; padding: 6px; } }
+  /* About this branch: the photo beside the description, hours and pickup. */
+  .branch-main { container-type: inline-size; min-width: 0; }
+  .about { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  @container (min-width: 560px) { .about.with-photo { grid-template-columns: minmax(0, 1fr) 260px; gap: 32px; align-items: start; } .about-photo { order: 0; max-width: none; } }
+  .about-desc { white-space: pre-line; max-width: 38em; }
+  .about-text h3 { font-size: 18px; margin: 26px 0 12px; }
+  .about-text > h3:first-child { margin-top: 0; }
+  .about-photo { border-radius: var(--r); overflow: hidden; aspect-ratio: 4 / 3; background: var(--ink-06); order: -1; max-width: 460px; }
+  .about-photo > img { width: 100%; height: 100%; object-fit: cover; }
   .branch-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; margin-top: 36px; }
   @media (min-width: 960px) { .branch-cols { grid-template-columns: minmax(0, 1fr) 380px; gap: 80px; } }
   .sec { padding: 32px 0; border-top: 1px solid var(--rule); }
