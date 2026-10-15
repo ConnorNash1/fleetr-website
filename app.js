@@ -1894,7 +1894,7 @@ function checkinWalkthrough() {
 
   const screens = [
     ["Open the texted link", el("ca-screen",
-      el("ca-wordmark", "fleetr"),
+      el("ca-wordmark", h("img", { src: "/fleetr-horizontal-light.svg", alt: "fleetr", width: "188", height: "44" })),
       ...field("Reservation Code", "KQT 482 913"),
       btn("Scan License"),
       el("ca-manual", "Enter details manually"),

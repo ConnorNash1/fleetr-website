@@ -11,14 +11,19 @@
   <meta property="og:url" content="https://fleetr.ai">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://fleetr.ai/og-image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="fleetr">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="fleetr">
   <meta name="twitter:description" content="Rent a vehicle. Reserve in minutes and pay at pickup.">
   <meta name="twitter:image" content="https://fleetr.ai/og-image.png">
 
-  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="fleetr" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#F9F9F7">
@@ -98,7 +103,11 @@
      dim while one is hovered, and the phone menu drops in with a short fade. */
   .nav { position: sticky; top: 0; z-index: 1000; background: var(--paper-70); -webkit-backdrop-filter: saturate(1.4) blur(14px); backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid var(--rule); height: var(--nav-h); }
   .nav .wrap { height: 100%; display: flex; align-items: center; gap: 20px; position: relative; }
-  .logo { font-family: var(--display); font-size: 27px; font-weight: 600; letter-spacing: -0.03em; text-decoration: none; line-height: 1; }
+  /* The fleetr logo (fleetr-horizontal-light.svg, the near-black one for light
+     backgrounds), 28px tall: above the 96px minimum width, with at least its
+     clear space (one bar of the mark) to everything around it. */
+  .logo { display: inline-flex; align-items: center; padding: 8px 0; text-decoration: none; line-height: 0; }
+  .logo img { display: block; height: 28px; width: auto; }
   .nav-links { display: none; gap: 2px; margin: 0 auto; padding: 4px; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); }
   .nav-links a { position: relative; text-decoration: none; font-size: 14.5px; font-weight: 500; padding: 8px 16px; border-radius: 999px; color: var(--ink); transition: color .3s ease, background-color .3s ease; }
   .nav-links:has(a:hover) a:not(:hover) { color: var(--ink-55); }
@@ -840,7 +849,8 @@
   .ca-status-icons i:nth-child(3) { width: 24px; background: none; box-shadow: inset 0 0 0 1.5px var(--ink), inset 0 0 0 3px var(--paper), inset 0 0 0 9px var(--ink); }
   .ca-track { display: flex; height: 100%; transform: translateX(calc(var(--i, 0) * -375px)); transition: transform .6s cubic-bezier(.65, 0, .35, 1); }
   .ca-screen { flex: 0 0 375px; height: 100%; display: flex; flex-direction: column; padding: 70px 24px 34px; overflow: hidden; }
-  .ca-wordmark { font-size: 48px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; text-align: center; margin: 30px 0 36px; }
+  .ca-wordmark { margin: 30px 0 36px; line-height: 0; }
+  .ca-wordmark img { display: block; height: 44px; width: auto; margin: 0 auto; }
   .ca-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 7px; }
   .ca-input { background: var(--ink-06); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 15px; font-size: 16px; color: var(--ink-70); margin-bottom: 22px; }
   .ca-btn { text-align: center; padding: 16px 20px; border-radius: 12px; border: 1px solid transparent; font-size: 16px; font-weight: 600; margin-bottom: 12px; transition: background-color .15s, transform .12s, box-shadow .12s; }
@@ -989,7 +999,7 @@
 <body>
   <header class="nav">
     <div class="wrap">
-      <a href="#/" class="logo" aria-label="fleetr, home">fleetr</a>
+      <a href="#/" class="logo" aria-label="fleetr, home"><img src="/fleetr-horizontal-light.svg" alt="fleetr" width="120" height="28"></a>
       <nav class="nav-links" aria-label="Main">
         <a href="#/" data-nav="rent">Rent a Vehicle</a>
         <a href="#/rental-companies" data-nav="rental-companies">For Rental Companies</a>
@@ -1014,7 +1024,7 @@
 
   <footer class="footer">
     <div class="wrap">
-      <a href="#/" class="logo" aria-label="fleetr, home">fleetr</a>
+      <a href="#/" class="logo" aria-label="fleetr, home"><img src="/fleetr-horizontal-light.svg" alt="fleetr" width="120" height="28"></a>
       <nav aria-label="Footer">
         <a href="#/">Rent a Vehicle</a>
         <a href="#/rental-companies">For Rental Companies</a>
