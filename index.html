@@ -129,9 +129,11 @@
   }
   .nav-sheet.open { opacity: 1; visibility: visible; transform: none; }
   .nav-sheet a { display: block; padding: 13px 16px; text-decoration: none; font-size: 17px; font-weight: 500; border-radius: 16px; }
-  .nav-sheet a:hover { background: var(--ink-06); }
+  /* The same soft pills as the bar: the page you are on filled, the one
+     under a finger or pointer a lighter version. */
+  .nav-sheet a:hover { background: rgba(31, 30, 29, 0.05); }
+  .nav-sheet a.active, .nav-sheet a.active:hover { background: rgba(31, 30, 29, 0.09); }
   .nav-sheet hr { border: none; border-top: 1px solid var(--rule); margin: 6px 8px; }
-  .nav-sheet a:last-child { margin-top: 2px; background: var(--ink); color: var(--paper); text-align: center; font-weight: 600; }
   @media (min-width: 960px) {
     /* Equal side columns keep the links pill on the page's centre line,
        however wide the logo and the log-in button are. */
@@ -1003,10 +1005,10 @@
         Menu
       </button>
       <div class="nav-sheet" id="nav-sheet">
-        <a href="#/">Rent a Vehicle</a>
+        <a href="#/" data-nav="rent">Rent a Vehicle</a>
         <a href="https://app.fleetr.ai">Check in</a>
-        <a href="#/rental-companies">For Rental Companies</a>
-        <a href="#/dealerships">For Dealerships</a>
+        <a href="#/rental-companies" data-nav="rental-companies">For Rental Companies</a>
+        <a href="#/dealerships" data-nav="dealerships">For Dealerships</a>
         <hr>
         <a href="https://internal.fleetr.ai">fleetr Log In</a>
       </div>
