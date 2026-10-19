@@ -109,16 +109,17 @@
   .logo { display: inline-flex; align-items: center; padding: 8px 0; text-decoration: none; line-height: 0; }
   .logo img { display: block; height: 28px; width: auto; }
   .nav-links { display: none; gap: 2px; margin: 0 auto; padding: 4px; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); }
-  .nav-links a { position: relative; text-decoration: none; font-size: 14.5px; font-weight: 500; padding: 8px 16px; border-radius: 999px; color: var(--ink); transition: color .3s ease, background-color .3s ease; }
-  .nav-links:has(a:hover) a:not(:hover) { color: var(--ink-55); }
-  .nav-links a.active::after { content: ""; position: absolute; left: 16px; right: 16px; bottom: 3px; height: 2px; border-radius: 1px; background: var(--terra); }
+  /* A soft pill: the page you are on filled, the one under the pointer a
+     lighter version of it. */
+  .nav-links a { position: relative; text-decoration: none; font-size: 14.5px; font-weight: 500; padding: 8px 16px; border-radius: 999px; color: var(--ink); white-space: nowrap; transition: background-color .2s ease; }
+  .nav-links a:hover { background: rgba(31, 30, 29, 0.05); }
+  .nav-links a.active, .nav-links a.active:hover { background: rgba(31, 30, 29, 0.09); }
+  .nav-links a:focus-visible { outline: 2px solid var(--terra); outline-offset: 2px; }
+  /* fleetr Log In, the group's last pill, styled like the others. */
+  .nav-links a.nav-login { height: auto; padding: 8px 16px; font-size: 14.5px; font-weight: 500; background: none; color: var(--ink); }
+  .nav-links a.nav-login:hover { background: rgba(31, 30, 29, 0.05); }
   .nav-login { display: none; align-items: center; text-decoration: none; font-size: 14px; font-weight: 600; height: 40px; padding: 0 18px; border-radius: 999px; white-space: nowrap; background: var(--ink); color: var(--paper); transition: background-color .2s; }
   .nav-login:hover { background: color-mix(in srgb, var(--ink) 84%, var(--paper)); }
-  /* Check in: a small link in the bar, beside Log in (or the menu on a phone). */
-  .nav-end { margin-left: auto; display: flex; align-items: center; gap: 14px; }
-  .nav-end + .nav-menu-btn { margin-left: 0; }
-  .nav-checkin { font-size: 14px; font-weight: 600; text-decoration: none; color: var(--ink); white-space: nowrap; padding: 6px 2px; border-bottom: 2px solid transparent; transition: border-color .2s; }
-  .nav-checkin:hover { border-bottom-color: var(--terra); }
   .nav-menu-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: 1px solid var(--rule-2); border-radius: 999px; font-size: 14px; font-weight: 600; background: var(--paper); }
   .nav-menu-btn svg { width: 16px; height: 16px; }
   .nav-sheet {
@@ -137,7 +138,6 @@
     .nav .wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
     .nav .logo { justify-self: start; }
     .nav-links, .nav-login { display: flex; }
-    .nav-end { justify-self: end; margin-left: 0; }
     .nav-menu-btn, .nav-sheet { display: none !important; }
   }
   main { flex: 1; }
@@ -993,19 +993,18 @@
       <a href="#/" class="logo" aria-label="fleetr, home"><img src="/fleetr-horizontal-light.svg" alt="fleetr" width="120" height="28"></a>
       <nav class="nav-links" aria-label="Main">
         <a href="#/" data-nav="rent">Rent a Vehicle</a>
+        <a href="https://app.fleetr.ai">Check in</a>
         <a href="#/rental-companies" data-nav="rental-companies">For Rental Companies</a>
         <a href="#/dealerships" data-nav="dealerships">For Dealerships</a>
-      </nav>
-      <div class="nav-end">
-        <a class="nav-checkin" href="https://app.fleetr.ai">Check in</a>
         <a class="nav-login" href="https://internal.fleetr.ai">fleetr Log In</a>
-      </div>
+      </nav>
       <button class="nav-menu-btn" type="button" aria-expanded="false" aria-controls="nav-sheet">
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 5h12M2 11h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         Menu
       </button>
       <div class="nav-sheet" id="nav-sheet">
         <a href="#/">Rent a Vehicle</a>
+        <a href="https://app.fleetr.ai">Check in</a>
         <a href="#/rental-companies">For Rental Companies</a>
         <a href="#/dealerships">For Dealerships</a>
         <hr>
