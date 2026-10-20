@@ -254,11 +254,15 @@ function rentalLines(cls, days) {
   if (p.cap) lines.push({ label: `Capped at the ${p.cap.days >= 28 ? "monthly" : "weekly"} price`, amount: round2(Number(p.cap.amount)) });
   return lines;
 }
-// Whether the rental is more than one rate times the days.
-const priceVaries = (cls) => !!(cls.price && (cls.price.cap || cls.price.lines.length > 1
-  || (cls.price.lines[0] && (cls.price.lines[0].kind === "season" || cls.price.lines[0].basis !== "daily"))));
-// The lowest a day costs on this rental, for "from $55/day".
-const fromRate = (cls) => (priceVaries(cls) ? Math.min(...cls.price.lines.map((l) => Number(l.perDay))) : Number(cls.dailyRate));
+// What a rental costs a day for its dates: "$69/day" when every day costs
+// the same, "avg $69/day" (the total over the days, whole dollars) when not.
+const perDayText = (total, days, same) => `${same ? "" : "avg "}${dayRate(Number(total) / Math.max(1, Number(days) || 1))}/day`;
+// A class's, from its own breakdown: the same rate every day and no cap.
+const classPerDay = (c) => perDayText(c.total, c.days, rentalLines(c, c.days).length === 1);
+// A branch's, from its search result: the class it shows, priced for the
+// dates. Every day at that class's daily rate when the total says so.
+const branchPerDay = (b) => perDayText(b.total, b.days, Math.round(Number(b.lowestDailyRate) * b.days * 100) === Math.round(Number(b.total) * 100));
+const branchDayPrice = (b) => Number(b.total) / Math.max(1, Number(b.days) || 1);
 
 // The price breakdown. Tax applies to every charge, as it will on the rental
 // agreement. coverages: the ones accepted, each with pricePerDay.
@@ -840,14 +844,14 @@ function SearchPage(q) {
     const map = makeMap(el, ATLANTIC, 5);
     if (!map) return null;
     pinned.forEach((b) => {
-      const pinEl = h("span", { class: "price-pin" }, dayRate(b.lowestDailyRate));
+      const pinEl = h("span", { class: "price-pin" }, dayRate(branchDayPrice(b)));
       const marker = window.L.marker([Number(b.latitude), Number(b.longitude)], {
         icon: window.L.divIcon({ className: "pin-wrap", html: pinEl, iconSize: null }), keyboard: true, title: b.name,
       }).addTo(map);
       marker.bindPopup(() => h("div", { style: { minWidth: "190px" } },
         h("div", { style: { fontFamily: "var(--display)", fontSize: "18px" } }, b.name),
         h("div", { style: { color: "var(--ink-55)" } }, cityOf(b)),
-        h("div", { style: { margin: "6px 0 10px" } }, "from ", h("b", null, `${dayRate(b.lowestDailyRate)}/day`)),
+        h("div", { style: { margin: "6px 0 10px" } }, h("b", null, branchPerDay(b))),
         h("a", { href: branchHref(b.locationId, trip, category, null, backTo()), class: "link-arrow" }, "See vehicles")));
       marker.on("mouseover", () => hot(b.locationId, true));
       marker.on("mouseout", () => hot(b.locationId, false));
@@ -918,8 +922,8 @@ function SearchPage(q) {
       }
       const all = res.branches || [];
       let open = all.filter((b) => b.available);
-      if (sort === "price_asc") open = [...open].sort((a, b) => a.lowestDailyRate - b.lowestDailyRate);
-      if (sort === "price_desc") open = [...open].sort((a, b) => b.lowestDailyRate - a.lowestDailyRate);
+      if (sort === "price_asc") open = [...open].sort((a, b) => branchDayPrice(a) - branchDayPrice(b));
+      if (sort === "price_desc") open = [...open].sort((a, b) => branchDayPrice(b) - branchDayPrice(a));
       const days = rentalDays(tripPu(trip), tripRt(trip));
       if (!open.length) {
         const reasons = [...new Set(all.map((b) => b.reason).filter(Boolean))];
@@ -952,7 +956,7 @@ function SearchPage(q) {
               h("div", { class: "card-sub" }, branchLine(b, cityOf(b))),
               perks.length > 0 && h("div", { class: "tags" }, perks.map((p) => h("span", { class: "tag" }, p.name)))),
             h("div", { class: "card-price" },
-              h("div", null, "from ", h("b", null, `${dayRate(b.lowestDailyRate)}/day`)),
+              h("div", null, h("b", null, branchPerDay(b))),
               h("span", null, `${money(b.total)} total`)));
           cards[b.locationId] = card;
           return card;
@@ -1071,7 +1075,7 @@ function branchView(id, res, trip, q) {
           classTypes(c).length && h("span", null, classTypes(c).join(", ")),
           c.seats != null && h("span", null, `${c.seats} seats`),
           c.bags != null && h("span", null, `${c.bags} bag${c.bags === 1 ? "" : "s"}`))),
-      h("div", { class: "class-price" }, h("b", null, `${priceVaries(c) ? "from " : ""}${dayRate(fromRate(c))}/day`), h("span", null, `${money(c.total, true)} total`)));
+      h("div", { class: "class-price" }, h("b", null, classPerDay(c)), h("span", null, `${money(c.total, true)} total`)));
     rows[c.classId] = row;
     return row;
   };
