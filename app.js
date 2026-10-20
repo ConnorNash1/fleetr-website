@@ -245,7 +245,8 @@ function rentalLines(cls, days) {
   const per = (v) => (Number.isInteger(Number(v)) ? dayRate(v) : money(v, true));
   const lines = p.lines.map((l) => ({
     amount: round2(Number(l.amount)),
-    label: l.kind === "season" ? `${dayRate(l.perDay)} \u00d7 ${n(l.days)}, ${l.name} (${seasonDay(l.start)} to ${seasonDay(l.end)})`
+    label: l.kind === "season" && (l.basis === "weekly" || l.basis === "monthly") ? `${n(l.days)} \u00d7 ${per(l.perDay)} ${l.name} ${l.basis} rate`
+      : l.kind === "season" ? `${dayRate(l.perDay)} \u00d7 ${n(l.days)}, ${l.name} (${seasonDay(l.start)} to ${seasonDay(l.end)})`
       : l.basis === "weekly"  ? `${n(l.days)} \u00d7 ${per(l.perDay)} weekly rate`
       : l.basis === "monthly" ? `${n(l.days)} \u00d7 ${per(l.perDay)} monthly rate`
       : `${dayRate(l.perDay)} \u00d7 ${n(l.days)}`,
