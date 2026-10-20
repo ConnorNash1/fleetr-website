@@ -234,24 +234,24 @@ const dayRate = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("en-CA", 
 // (price_rental, seasonal_rates.sql in fleetr-infra): normal days, each
 // season's days at its rate, and the cap when a longer rental would cost
 // less. Without one, the daily rate times the days.
-const SEASON_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const seasonDay = (md) => { const [m, d] = String(md || "").split("-").map(Number); return m && d ? `${SEASON_MONTHS[m - 1]} ${d}` : ""; };
+// Each line is the days at one rate, "31 days × $69", however many seasons
+// or tiers the rate came from.
 function rentalLines(cls, days) {
   const p = cls.price;
-  if (!p || !Array.isArray(p.lines) || !p.lines.length) {
-    return [{ label: `${dayRate(cls.dailyRate)} \u00d7 ${days} day${days === 1 ? "" : "s"}`, amount: round2(cls.dailyRate * days) }];
-  }
   const n = (k) => `${k} day${k === 1 ? "" : "s"}`;
   const per = (v) => (Number.isInteger(Number(v)) ? dayRate(v) : money(v, true));
-  const lines = p.lines.map((l) => ({
-    amount: round2(Number(l.amount)),
-    label: l.kind === "season" && (l.basis === "weekly" || l.basis === "monthly") ? `${n(l.days)} \u00d7 ${per(l.perDay)} ${l.name} ${l.basis} rate`
-      : l.kind === "season" ? `${dayRate(l.perDay)} \u00d7 ${n(l.days)}, ${l.name} (${seasonDay(l.start)} to ${seasonDay(l.end)})`
-      : l.basis === "weekly"  ? `${n(l.days)} \u00d7 ${per(l.perDay)} weekly rate`
-      : l.basis === "monthly" ? `${n(l.days)} \u00d7 ${per(l.perDay)} monthly rate`
-      : `${dayRate(l.perDay)} \u00d7 ${n(l.days)}`,
-  }));
-  if (p.cap) lines.push({ label: `Capped at the ${p.cap.days} day price`, amount: round2(Number(p.cap.amount)) });
+  if (!p || !Array.isArray(p.lines) || !p.lines.length) {
+    return [{ label: `${n(days)} \u00d7 ${per(cls.dailyRate)}`, amount: round2(cls.dailyRate * days) }];
+  }
+  const groups = [];
+  p.lines.forEach((l) => {
+    const rate = Number(l.perDay);
+    const g = groups.find((x) => x.rate === rate);
+    if (g) { g.days += l.days; g.amount += Number(l.amount); }
+    else groups.push({ rate, days: l.days, amount: Number(l.amount) });
+  });
+  const lines = groups.map((g) => ({ label: `${n(g.days)} \u00d7 ${per(g.rate)}`, amount: round2(g.amount) }));
+  if (p.cap) lines.push({ label: `Capped at the ${p.cap.days >= 28 ? "monthly" : "weekly"} price`, amount: round2(Number(p.cap.amount)) });
   return lines;
 }
 // Whether the rental is more than one rate times the days.
@@ -264,6 +264,7 @@ const fromRate = (cls) => (priceVaries(cls) ? Math.min(...cls.price.lines.map((l
 // agreement. coverages: the ones accepted, each with pricePerDay.
 function quote(cls, days, coverages, taxes) {
   const lines = rentalLines(cls, days);
+  const rentalCount = lines.length;
   (coverages || []).forEach((c) => {
     const p = Number(c.pricePerDay) || 0;
     lines.push({ label: `${c.name} (${money(p, true)} \u00d7 ${days})`, amount: round2(p * days) });
@@ -275,17 +276,21 @@ function quote(cls, days, coverages, taxes) {
   const total = round2(subtotal + taxLines.reduce((s, l) => s + l.amount, 0));
   // Against every non-season day at the normal daily rate, from the database.
   const savings = round2(Number(cls.price && cls.price.savings) || 0);
-  return { lines, subtotal, taxLines, total, savings };
+  return { lines, rentalCount, subtotal, taxLines, total, savings };
 }
 
+// "You save" sits right under the rental's own lines, before coverages and tax.
 function quoteLines(q) {
+  const row = (l) => h("div", { class: "line" }, h("span", { class: "lbl" }, l.label), h("span", null, money(l.amount, true)));
+  const at = q.rentalCount ?? q.lines.length;
   return h("div", { class: "lines" },
-    q.lines.map((l) => h("div", { class: "line" }, h("span", { class: "lbl" }, l.label), h("span", null, money(l.amount, true)))),
+    q.lines.slice(0, at).map(row),
+    q.savings > 0 && h("div", { class: "line muted" }, h("span", null, `You save ${money(q.savings)}`)),
+    q.lines.slice(at).map(row),
     q.taxLines.length
       ? q.taxLines.map((l) => h("div", { class: "line muted" }, h("span", null, l.label), h("span", null, money(l.amount, true))))
       : h("div", { class: "line muted" }, h("span", null, "Taxes"), h("span", null, "None")),
-    h("div", { class: "line total" }, h("span", null, "Total"), h("span", null, money(q.total, true))),
-    q.savings > 0 && h("div", { class: "line muted" }, h("span", null, `You save ${money(q.savings)}`)));
+    h("div", { class: "line total" }, h("span", null, "Total"), h("span", null, money(q.total, true))));
 }
 
 // ─── Listing helpers ─────────────────────────────────────────────────────────
@@ -1108,10 +1113,7 @@ function branchView(id, res, trip, q) {
       h("dl", { class: "bb-summary" },
         line("Pick-up", `${fmtDay(trip.puDate)}, ${fmtTime(trip.puTime)}`),
         line("Return", `${fmtDay(trip.rtDate)}, ${fmtTime(trip.rtTime)}`),
-        line("Days", String(days)),
-        priceVaries(chosen)
-          ? rentalLines(chosen, days).map((l) => line(l.label, money(l.amount, true)))
-          : line("Daily rate", `${dayRate(chosen.dailyRate)}/day`),
+        rentalLines(chosen, days).map((l) => line(l.label, money(l.amount, true))),
         qte.savings > 0 && line("You save", money(qte.savings)),
         qte.taxLines.length ? qte.taxLines.map((t) => line(t.label, money(t.amount, true))) : line("Tax", "None")),
       h("div", { class: "bb-total" }, h("span", null, "Total"), h("b", null, money(qte.total, true))),
@@ -1419,7 +1421,7 @@ function checkoutView(id, b, cls, trip, days, backHref) {
       resCode: res.resCode, appToken: res.appToken || null,
       branch: { name: b.name, address: b.address, city: cityOf(b), timeZone: b.timeZone, photoPath: b.photoPath, logoPath: b.logoPath },
       className: cls.name, category: cls.category, classIcon: classIcon(cls), trip, days: res.days || days,
-      lines: qte.lines, taxLines: qte.taxLines, total: qte.total, savings: qte.savings,
+      lines: qte.lines, rentalCount: qte.rentalCount, taxLines: qte.taxLines, total: qte.total, savings: qte.savings,
       firstName: form.first.trim(), phone: v.phone, email: form.email.trim(),
     });
     go("/confirmed");
@@ -1572,7 +1574,7 @@ function ConfirmedPage() {
       h("div", { class: "sum-dates" },
         h("div", null, h("small", null, "Pick-up"), fmtDay(c.trip.puDate), h("br"), fmtTime(c.trip.puTime)),
         h("div", null, h("small", null, "Return"), fmtDay(c.trip.rtDate), h("br"), fmtTime(c.trip.rtTime))),
-      quoteLines({ lines: c.lines, taxLines: c.taxLines || [], total: c.total, savings: c.savings || 0 }),
+      quoteLines({ lines: c.lines, rentalCount: c.rentalCount, taxLines: c.taxLines || [], total: c.total, savings: c.savings || 0 }),
       h("p", { class: "bb-note" }, "You won't be charged now. Pay at pickup."))));
 }
 
