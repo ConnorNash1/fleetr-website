@@ -213,10 +213,6 @@
   .search-go { position: relative; overflow: hidden; transition: background-color .15s, transform .15s, box-shadow .15s; margin: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 15px 22px; border-radius: 999px; background: var(--terra); color: var(--ink); font-weight: 600; }
   .search-go:hover, .search-go:active { background: var(--terra-dk); }
   .search-go svg { width: 18px; height: 18px; }
-  /* The homepage's Find my vehicle, under the bar and as wide as it. */
-  .search-big { margin-top: 14px; padding: 18px 24px; border-radius: 16px; font-size: 18px; font-weight: 700; }
-  .search-big:hover:not(:disabled), .search-big:active { background: var(--terra-dk); }
-  .search-big svg { width: 20px; height: 20px; }
   @media (min-width: 760px) {
     /* Each section is a full-height pill. Hovering one fills it, and the
        dividers on both its sides fade so the pill reads as one shape; the
@@ -230,6 +226,10 @@
     .seg:hover::before, .seg:hover + .seg::before, .seg.is-open::before, .seg.is-open + .seg::before { opacity: 0; }
     .search-go { width: 54px; height: 54px; padding: 0; flex: none; align-self: center; margin: 0 9px 0 4px; }
     .search-go .go-text { display: none; }
+    /* The homepage's bar: Where, Pick-up and Return the same width, and
+       never so narrow that a date and time are cut short. */
+    .search:not(.compact) .seg, .search:not(.compact) .seg:first-child { flex: 1 1 0; }
+    .search:not(.compact) button.seg { min-width: max-content; }
     .search.compact .seg { padding: 9px 22px; }
     .search.compact .search-go { width: 44px; height: 44px; }
     .search.compact .search-pill { box-shadow: var(--shadow); }
@@ -292,6 +292,9 @@
   .hero-top { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px; margin-bottom: 36px; }
   .hero-top > div { display: flex; flex-direction: column; align-items: center; }
   .hero-top h1 { max-width: 11em; }
+  /* One phrase a line, never broken inside on a wide screen. */
+  .hero-line { display: block; }
+  @media (min-width: 760px) { .hero-line { white-space: nowrap; } }
   @media (min-width: 760px) { .hero-top { margin-bottom: 48px; } }
   .hero-top > *, .hero .search, .types { animation: rise .6s cubic-bezier(.22, 1, .36, 1) backwards; }
   .hero .search { animation-delay: .2s; }

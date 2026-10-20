@@ -592,9 +592,7 @@ function Calendar({ trip, focus, onChange, onDone }) {
 }
 
 // ─── Search pill ─────────────────────────────────────────────────────────────
-// bigButton: the homepage's, where a full-width Find my vehicle button under
-// the bar replaces the round search button in it.
-function SearchPill({ where, trip, category, compact, bigButton, onSearch }) {
+function SearchPill({ where, trip, category, compact, onSearch }) {
   const state = { where: where || "", trip: { ...trip }, category: category || "" };
   const root = h("div", { class: `search${compact ? " compact" : ""}` });
   let cal = null, openSeg = null;
@@ -648,9 +646,7 @@ function SearchPill({ where, trip, category, compact, bigButton, onSearch }) {
       h("div", { class: "seg", onclick: () => whereInput.focus() },
         h("label", { class: "seg-label", for: whereInput.id }, "Where"), whereInput),
       puSeg, rtSeg,
-      !bigButton && h("button", { type: "submit", class: "search-go", "aria-label": "Search" }, icon("search", "2.6"), h("span", { class: "go-text" }, "Search"))),
-    bigButton && h("button", { type: "button", class: "btn btn-primary btn-block search-big", onclick: (e) => { e.stopPropagation(); submit(); } },
-      icon("search", "2.4"), "Find my vehicle"),
+      h("button", { type: "submit", class: "search-go", "aria-label": "Search" }, icon("search", "2.6"), h("span", { class: "go-text" }, "Search"))),
     errorEl);
   paint();
   // On a phone the results page shows a one-line summary until it is tapped.
@@ -680,7 +676,7 @@ function searchParams({ where, trip, category }) {
 function HomePage(q) {
   const trip = tripFrom(q);
   let cats = catList(q.get("cat"));
-  const pill = SearchPill({ where: q.get("where") || "", trip, category: cats.join(","), bigButton: true, onSearch: (s) => go("/search", searchParams(s)) });
+  const pill = SearchPill({ where: q.get("where") || "", trip, category: cats.join(","), onSearch: (s) => go("/search", searchParams(s)) });
   const catRow = h("div", { class: "cats", role: "group", "aria-label": "Vehicle type" });
   // Each type toggles on its own; the search button runs the search with them.
   const drawCats = () => {
@@ -710,7 +706,8 @@ function HomePage(q) {
       h("div", { class: "hero-top" },
         h("div", null,
           h("span", { class: "kicker" }, "Rent a vehicle"),
-          h("h1", { style: { marginTop: "22px" } }, "Book it here. Skip the counter."))),
+          h("h1", { style: { marginTop: "22px" } },
+            h("span", { class: "hero-line" }, "Book it here."), h("span", { class: "hero-line" }, "Skip the counter.")))),
       pill,
       h("div", { class: "types" }, h("span", { class: "types-label" }, "Browse by type"), catRow))),
 
