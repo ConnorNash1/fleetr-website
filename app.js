@@ -225,15 +225,43 @@ const round2 = (n) => Math.round(n * 100) / 100;
 const money = (n, cents) => {
   const v = Number(n) || 0;
   const whole = !cents && Math.abs(v - Math.round(v)) < 0.005;
-  return "$" + v.toLocaleString("en-CA", { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 });
+  return (v < 0 ? "-$" : "$") + Math.abs(v).toLocaleString("en-CA", { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 });
 };
 // A daily rate, in whole dollars: "$55". Trip totals and tax keep cents.
 const dayRate = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("en-CA", { maximumFractionDigits: 0 });
 
+// The rental's own lines. With cls.price, the database's breakdown
+// (price_rental, seasonal_rates.sql in fleetr-infra): normal days, each
+// season's days at its rate, and the cap when a longer rental would cost
+// less. Without one, the daily rate times the days.
+const SEASON_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const seasonDay = (md) => { const [m, d] = String(md || "").split("-").map(Number); return m && d ? `${SEASON_MONTHS[m - 1]} ${d}` : ""; };
+function rentalLines(cls, days) {
+  const p = cls.price;
+  if (!p || !Array.isArray(p.lines) || !p.lines.length) {
+    return [{ label: `${dayRate(cls.dailyRate)} \u00d7 ${days} day${days === 1 ? "" : "s"}`, amount: round2(cls.dailyRate * days) }];
+  }
+  const n = (k) => `${k} day${k === 1 ? "" : "s"}`;
+  const lines = p.lines.map((l) => ({
+    amount: round2(Number(l.amount)),
+    label: l.kind === "season" ? `${dayRate(l.perDay)} \u00d7 ${n(l.days)}, ${l.name} (${seasonDay(l.start)} to ${seasonDay(l.end)})`
+      : l.basis === "weekly"  ? `${n(l.days)} at the weekly rate, ${dayRate(l.periodRate)}/week`
+      : l.basis === "monthly" ? `${n(l.days)} at the monthly rate, ${dayRate(l.periodRate)}/month`
+      : `${dayRate(l.perDay)} \u00d7 ${n(l.days)}`,
+  }));
+  if (p.cap) lines.push({ label: `Capped at the ${p.cap.days} day price`, amount: round2(Number(p.cap.amount)) });
+  return lines;
+}
+// Whether the rental is more than one rate times the days.
+const priceVaries = (cls) => !!(cls.price && (cls.price.cap || cls.price.lines.length > 1
+  || (cls.price.lines[0] && (cls.price.lines[0].kind === "season" || cls.price.lines[0].basis !== "daily"))));
+// The lowest a day costs on this rental, for "from $55/day".
+const fromRate = (cls) => (priceVaries(cls) ? Math.min(...cls.price.lines.map((l) => Number(l.perDay))) : Number(cls.dailyRate));
+
 // The price breakdown. Tax applies to every charge, as it will on the rental
 // agreement. coverages: the ones accepted, each with pricePerDay.
 function quote(cls, days, coverages, taxes) {
-  const lines = [{ label: `${dayRate(cls.dailyRate)} \u00d7 ${days} day${days === 1 ? "" : "s"}`, amount: round2(cls.dailyRate * days) }];
+  const lines = rentalLines(cls, days);
   (coverages || []).forEach((c) => {
     const p = Number(c.pricePerDay) || 0;
     lines.push({ label: `${c.name} (${money(p, true)} \u00d7 ${days})`, amount: round2(p * days) });
@@ -1033,7 +1061,7 @@ function branchView(id, res, trip, q) {
           classTypes(c).length && h("span", null, classTypes(c).join(", ")),
           c.seats != null && h("span", null, `${c.seats} seats`),
           c.bags != null && h("span", null, `${c.bags} bag${c.bags === 1 ? "" : "s"}`))),
-      h("div", { class: "class-price" }, h("b", null, `${dayRate(c.dailyRate)}/day`), h("span", null, `${money(c.total, true)} total`)));
+      h("div", { class: "class-price" }, h("b", null, `${priceVaries(c) ? "from " : ""}${dayRate(fromRate(c))}/day`), h("span", null, `${money(c.total, true)} total`)));
     rows[c.classId] = row;
     return row;
   };
@@ -1076,7 +1104,9 @@ function branchView(id, res, trip, q) {
         line("Pick-up", `${fmtDay(trip.puDate)}, ${fmtTime(trip.puTime)}`),
         line("Return", `${fmtDay(trip.rtDate)}, ${fmtTime(trip.rtTime)}`),
         line("Days", String(days)),
-        line("Daily rate", `${dayRate(chosen.dailyRate)}/day`),
+        priceVaries(chosen)
+          ? rentalLines(chosen, days).map((l) => line(l.label, money(l.amount, true)))
+          : line("Daily rate", `${dayRate(chosen.dailyRate)}/day`),
         qte.taxLines.length ? qte.taxLines.map((t) => line(t.label, money(t.amount, true))) : line("Tax", "None")),
       h("div", { class: "bb-total" }, h("span", null, "Total"), h("b", null, money(qte.total, true))),
       h("button", { type: "button", class: "btn btn-primary btn-block", onclick: reserve }, "Reserve"),
