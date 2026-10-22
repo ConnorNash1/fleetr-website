@@ -442,6 +442,9 @@
   .card-name { font-family: var(--display); font-size: 21px; font-weight: 500; line-height: 1.2; }
   .card-sub { color: var(--ink-55); font-size: 14.5px; }
   .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  /* The earliest times a branch closed at the asked ones can give. */
+  .card-note, .class-note { margin-top: 6px; font-size: 13.5px; font-weight: 600; color: var(--ink-70); }
+  .trip-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
   .tag { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--paper); border: 1px solid var(--rule); color: var(--ink-70); }
   .card-price { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; font-size: 15px; white-space: nowrap; }
   .card-price b { font-size: 17px; }
@@ -622,7 +625,12 @@
   .check { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; cursor: pointer; margin-top: 18px; }
   .check input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--ink); }
   .verify-box { border: 1px solid var(--rule-2); border-radius: var(--r); padding: 20px; }
-  .code-input { max-width: 240px; text-align: left; font-size: 24px; font-weight: 700; letter-spacing: .45em; }
+  /* Six digits spread evenly across a box sized to them: the space after
+     each digit (letter-spacing) is matched by the left padding, so the gaps
+     at both ends are equal and the caret starts at the first digit. A digit
+     is .647em wide in Inter's even-width figures (ch measures a wider 0). */
+  .code-input { --ls: .5em; --digit: .647em; width: calc(6 * var(--digit) + 7 * var(--ls) + 30px); max-width: 100%; padding-left: calc(14px + var(--ls)); padding-right: 14px;
+    text-align: left; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: var(--ls); }
   .ts { min-height: 66px; margin: 14px 0; }
   .summary-head { display: flex; gap: 14px; align-items: center; padding-bottom: 18px; border-bottom: 1px solid var(--rule); }
   .summary-head .thumb { width: 100px; height: 80px; border-radius: 10px; overflow: hidden; flex: none; background: var(--ink-06); }

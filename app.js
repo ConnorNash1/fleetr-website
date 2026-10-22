@@ -74,6 +74,7 @@ Object.assign(ICONS, {
   lPlane:     '<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
   lTruck:     '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
   lMoon:      '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  lKey:       '<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.8-9.8M17 6l3 3M14.5 8.5l2 2"/>',
   lId:        '<path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/>',
   lWallet:    '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
   lCard:      '<rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>',
@@ -216,6 +217,12 @@ function tripFrom(q) {
     rtDate: validYmd(rd) ? rd : d.rtDate, rtTime: validTime(rtm) ? rtm : d.rtTime,
   };
 }
+// The times a branch can give when the asked ones fall when it is closed
+// (trip from public_search_branches and public_branch_detail), as a trip.
+const tripOf = (x) => {
+  const [puDate, puTime] = String(x.pickup).split("T"), [rtDate, rtTime] = String(x.return).split("T");
+  return { puDate, puTime, rtDate, rtTime };
+};
 const tripPu = (t) => stamp(t.puDate, t.puTime);
 const tripRt = (t) => stamp(t.rtDate, t.rtTime);
 const tripRange = (t) => `${fmtShort(t.puDate)} ${fmtTime(t.puTime)} \u2013 ${fmtShort(t.rtDate)} ${fmtTime(t.rtTime)}`;
@@ -303,7 +310,8 @@ function perksOf(b) {
   const out = [];
   if (b.airportPickup) out.push({ icon: "lPlane", name: "Airport pickup", text: b.airportCodes && b.airportCodes.length ? `At ${b.airportCodes.join(", ")}` : "Picked up at the airport" });
   if (b.delivery) out.push({ icon: "lTruck", name: "Delivery", text: "They can bring the vehicle to you" });
-  if (b.afterHoursDropoff) out.push({ icon: "lMoon", name: "After-hours drop-off", text: "Return outside opening hours" });
+  if (b.lockboxPickup) out.push({ icon: "lKey", name: "Pickup any time", text: "Pick up outside opening hours from a lockbox" });
+  if (b.afterHoursDropoff) out.push({ icon: "lMoon", name: "Returns any time", text: "Return outside opening hours with the key drop" });
   return out;
 }
 const HOURS_DAYS = [["mon", "Monday"], ["tue", "Tuesday"], ["wed", "Wednesday"], ["thu", "Thursday"], ["fri", "Friday"], ["sat", "Saturday"], ["sun", "Sunday"]];
@@ -943,15 +951,19 @@ function SearchPage(q) {
           h("p", null, `${tripRange(trip)} · ${days} day${days === 1 ? "" : "s"} · prices before tax`)),
         h("div", { class: "cards" }, open.map((b) => {
           const perks = perksOf(b);
+          // A branch closed at the asked times shows anyway, priced to the
+          // earliest it is open, with the note. Tapping takes those times.
+          const cardTrip = b.trip ? tripOf(b.trip) : trip;
           // A row: the logo, then the company, its branch and city and the
           // perks, then the price on the right.
-          const card = h("a", { class: "card", href: branchHref(b.locationId, trip, category, null, backTo()),
+          const card = h("a", { class: "card", href: branchHref(b.locationId, cardTrip, category, null, backTo()),
             onmouseenter: () => hot(b.locationId, true), onmouseleave: () => hot(b.locationId, false) },
             logoBlock(b, "card-mark"),
             h("div", { class: "card-body" },
               h("div", { class: "card-name" }, companyOf(b)),
               h("div", { class: "card-sub" }, branchLine(b, cityOf(b))),
-              perks.length > 0 && h("div", { class: "tags" }, perks.map((p) => h("span", { class: "tag" }, p.name)))),
+              perks.length > 0 && h("div", { class: "tags" }, perks.map((p) => h("span", { class: "tag" }, p.name))),
+              b.trip && b.trip.note && h("div", { class: "card-note" }, b.trip.note)),
             h("div", { class: "card-price" },
               h("div", null, h("b", null, branchPerDay(b))),
               h("span", null, `${money(b.total)} total`)));
@@ -1062,6 +1074,10 @@ function branchView(id, res, trip, q) {
   const matches = classes.filter(fits), others = classes.filter((c) => !fits(c));
   let chosen = classes.find((c) => c.classId === q.get("cls")) || (matches.length === 1 ? matches[0] : null);
 
+  // Each class at the times it can have: the asked ones, or the earliest
+  // the branch is open, priced to them.
+  const tripFor = (c) => (c && c.trip && c.trip.moved ? tripOf(c.trip) : trip);
+  const daysFor = (c) => (c && c.days) || days;
   const rows = {};
   const classRow = (c) => {
     const row = h("button", { type: "button", class: "class-row", "aria-pressed": "false", onclick: () => choose(c) },
@@ -1071,7 +1087,8 @@ function branchView(id, res, trip, q) {
         h("div", { class: "class-meta" },
           classTypes(c).length && h("span", null, classTypes(c).join(", ")),
           c.seats != null && h("span", null, `${c.seats} seats`),
-          c.bags != null && h("span", null, `${c.bags} bag${c.bags === 1 ? "" : "s"}`))),
+          c.bags != null && h("span", null, `${c.bags} bag${c.bags === 1 ? "" : "s"}`)),
+        c.trip && c.trip.moved && c.trip.note && h("div", { class: "class-note" }, c.trip.note)),
       h("div", { class: "class-price" }, h("b", null, classPerDay(c)), h("span", null, `${money(c.total, true)} total`)));
     rows[c.classId] = row;
     return row;
@@ -1093,7 +1110,8 @@ function branchView(id, res, trip, q) {
   };
   const reserve = () => {
     if (!chosen) { vehiclesEl.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
-    go(`/checkout/${encodeURIComponent(id)}`, { pu: tripPu(trip), rt: tripRt(trip), cls: chosen.classId });
+    const t = tripFor(chosen);
+    go(`/checkout/${encodeURIComponent(id)}`, { pu: tripPu(t), rt: tripRt(t), cls: chosen.classId });
   };
   // The booking card: a summary of the vehicle chosen, or a prompt to choose
   // one. On a phone, the bar along the bottom of the screen.
@@ -1107,21 +1125,22 @@ function branchView(id, res, trip, q) {
         classes.length > 0 && h("button", { type: "button", class: "btn btn-primary", onclick: reserve }, "Choose"));
       return;
     }
-    const qte = quote(chosen, days, [], taxes);
+    const t = tripFor(chosen), cDays = daysFor(chosen);
+    const qte = quote(chosen, cDays, [], taxes);
     const line = (label, value) => h("div", null, h("dt", null, label), h("dd", null, value));
     set(box,
       h("div", { class: "bb-title" }, chosen.name),
       h("dl", { class: "bb-summary" },
-        line("Pick-up", `${fmtDay(trip.puDate)}, ${fmtTime(trip.puTime)}`),
-        line("Return", `${fmtDay(trip.rtDate)}, ${fmtTime(trip.rtTime)}`),
-        rentalLines(chosen, days).map((l) => line(l.label, money(l.amount, true))),
+        line("Pick-up", `${fmtDay(t.puDate)}, ${fmtTime(t.puTime)}`),
+        line("Return", `${fmtDay(t.rtDate)}, ${fmtTime(t.rtTime)}`),
+        rentalLines(chosen, cDays).map((l) => line(l.label, money(l.amount, true))),
         qte.savings > 0 && line("You save", money(qte.savings)),
         qte.taxLines.length ? qte.taxLines.map((t) => line(t.label, money(t.amount, true))) : line("Tax", "None")),
       h("div", { class: "bb-total" }, h("span", null, "Total"), h("b", null, money(qte.total, true))),
       h("button", { type: "button", class: "btn btn-primary btn-block", onclick: reserve }, "Reserve"),
       h("p", { class: "bb-note" }, "You won't be charged now. Pay at pickup."));
     set(bar,
-      h("div", null, h("b", null, `${money(qte.total, true)} total`), h("small", null, `${chosen.name} · ${days} day${days === 1 ? "" : "s"}`)),
+      h("div", null, h("b", null, `${money(qte.total, true)} total`), h("small", null, `${chosen.name} · ${cDays} day${cDays === 1 ? "" : "s"}`)),
       h("button", { type: "button", class: "btn btn-primary", onclick: reserve }, "Reserve"));
   };
   drawBox();
@@ -1144,6 +1163,10 @@ function branchView(id, res, trip, q) {
   const backHref = `#/search?${new URLSearchParams(Object.entries({ ...searchParams({ where: back.where, trip, category: wantCat }), sort: back.sort })
     .filter(([, v]) => v != null && v !== "")).toString()}`;
   const content = h("div", { class: "branch-main" },
+    res.trip && res.trip.note && h("div", { class: "notice soft trip-notice", style: { marginBottom: "28px" } },
+      h("span", null, `${res.trip.note}. Prices below are for these times.`),
+      h("button", { type: "button", class: "btn btn-line", onclick: () => go(`/branch/${encodeURIComponent(id)}`,
+        { pu: res.trip.pickup, rt: res.trip.return, cat: wantCat || null, where: back.where || null, sort: back.sort || null }) }, "Use these times")),
     res.reason && h("div", { class: "notice", role: "alert", style: { marginBottom: "28px" } }, `${reasonText(res.reason)}${res.reason === "too_soon" ? ` This branch needs ${b.minNoticeHours} hour${b.minNoticeHours === 1 ? "" : "s"} notice.` : ""}${res.reason === "too_long" ? ` The longest rental here is ${b.maxRentalDays} days.` : ""}`),
     h("section", { class: "sec", id: "vehicles" },
       h("h2", null, "Available for your dates"),
@@ -1204,7 +1227,10 @@ function CheckoutPage(id, q) {
           h("a", { class: "btn btn-primary", href: backHref }, "Choose another vehicle"))));
         return;
       }
-      set(root, checkoutView(id, res.branch, cls, trip, res.days || rentalDays(tripPu(trip), tripRt(trip)), backHref));
+      // The class's own times: the asked ones, or the earliest the branch is
+      // open, which is what is booked.
+      const ct = cls.trip && cls.trip.moved ? tripOf(cls.trip) : trip;
+      set(root, checkoutView(id, res.branch, cls, ct, cls.days || res.days || rentalDays(tripPu(ct), tripRt(ct)), backHref));
     })
     .catch(() => set(root, h("div", { class: "wrap" }, emptyState("Connection", "Something went wrong.", REASONS.network,
       h("button", { type: "button", class: "btn btn-primary", onclick: render }, "Try again")))));
@@ -1471,7 +1497,7 @@ function checkoutView(id, b, cls, trip, days, backHref) {
         }, 1000);
       }
     }
-    kids.push(verifyMsg, h("p", { class: "bb-note" }, "You won't be charged now. Pay at pickup."));
+    kids.push(verifyMsg);
     set(verify, ...kids);
     if (v.stage === "idle") mountTurnstile();
   };
@@ -1564,10 +1590,8 @@ function ConfirmedPage() {
         h("div", { class: "code" }, c.resCode)),
       h("div", { class: "confirm-actions" },
         h("a", { class: "btn btn-primary", href: appLink(c) }, icon("phone", "1.8"), "Check in with the app"),
-        calWrap),
-      h("p", { class: "hint", style: { maxWidth: "34em" } },
-        "At pickup, open the app to scan your license, check the vehicle, and sign. You can also open it with your reservation code and last name.")),
-    h("aside", { class: "book-box", style: { position: "static" } },
+        calWrap)),
+    h("aside", { class: "book-box", style: { position: "static", alignSelf: "start" } },
       h("div", { class: "summary-head" },
         h("div", { class: "thumb" }, photoUrl(c.branch.photoPath) ? h("img", { src: photoUrl(c.branch.photoPath), alt: "" }) : h("div", { class: "placeholder-photo" }, icon(c.classIcon || c.category || "Car", "1.2"))),
         h("div", null, h("b", null, c.className), h("span", null, c.branch.name),
