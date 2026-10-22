@@ -103,11 +103,17 @@
      dim while one is hovered, and the phone menu drops in with a short fade. */
   .nav { position: sticky; top: 0; z-index: 1000; background: var(--paper-70); -webkit-backdrop-filter: saturate(1.4) blur(14px); backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid var(--rule); height: var(--nav-h); }
   .nav .wrap { height: 100%; display: flex; align-items: center; gap: 20px; position: relative; }
-  /* The fleetr logo (fleetr-horizontal-light.svg, the near-black one for light
-     backgrounds), 28px tall: above the 96px minimum width, with at least its
-     clear space (one bar of the mark) to everything around it. */
+  /* The fleetr wordmark (wordmark.svg, "fleetr" in Inter SemiBold as
+     outlines), drawn as a mask so each place sets its colour: terracotta on
+     a light background, #F9F9F7 on a dark or terracotta one. --h is its
+     height; the width follows the wordmark's shape. */
+  .fleetr-wordmark {
+    --h: 28px; display: block; height: var(--h); width: calc(var(--h) * 3.1099);
+    background-color: #F4845F;
+    -webkit-mask: url(/wordmark.svg) center / contain no-repeat; mask: url(/wordmark.svg) center / contain no-repeat;
+  }
   .logo { display: inline-flex; align-items: center; padding: 8px 0; text-decoration: none; line-height: 0; }
-  .logo img { display: block; height: 28px; width: auto; }
+  .logo .fleetr-wordmark { --h: 28px; }
   .nav-links { display: none; gap: 2px; margin: 0 auto; padding: 4px; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); }
   /* A soft pill: the page you are on filled, the one under the pointer a
      lighter version of it. */
@@ -854,7 +860,7 @@
   .ca-track { display: flex; height: 100%; transform: translateX(calc(var(--i, 0) * -375px)); transition: transform .6s cubic-bezier(.65, 0, .35, 1); }
   .ca-screen { flex: 0 0 375px; height: 100%; display: flex; flex-direction: column; padding: 70px 24px 34px; overflow: hidden; position: relative; }
   .ca-wordmark { margin: 30px 0 36px; line-height: 0; }
-  .ca-wordmark img { display: block; height: 44px; width: auto; margin: 0 auto; }
+  .ca-wordmark .fleetr-wordmark { --h: 44px; margin: 0 auto; }
   .ca-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 7px; }
   .ca-input { background: var(--ink-06); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 15px; font-size: 16px; color: var(--ink-70); margin-bottom: 22px; }
   .ca-btn { text-align: center; padding: 16px 20px; border-radius: 12px; border: 1px solid transparent; font-size: 16px; font-weight: 600; margin-bottom: 12px; transition: background-color .15s, transform .12s, box-shadow .12s; }
@@ -1009,7 +1015,7 @@
 <body>
   <header class="nav">
     <div class="wrap">
-      <a href="#/" class="logo" aria-label="fleetr, home"><img src="/fleetr-horizontal-light.svg" alt="fleetr" width="120" height="28"></a>
+      <a href="#/" class="logo" aria-label="fleetr, home"><span class="fleetr-wordmark" role="img" aria-label="fleetr"></span></a>
       <nav class="nav-links" aria-label="Main">
         <a href="#/" data-nav="rent">Rent a Vehicle</a>
         <a href="https://app.fleetr.ai">Check in</a>
@@ -1036,7 +1042,7 @@
 
   <footer class="footer">
     <div class="wrap">
-      <a href="#/" class="logo" aria-label="fleetr, home"><img src="/fleetr-horizontal-light.svg" alt="fleetr" width="120" height="28"></a>
+      <a href="#/" class="logo" aria-label="fleetr, home"><span class="fleetr-wordmark" role="img" aria-label="fleetr"></span></a>
       <nav aria-label="Footer">
         <a href="#/">Rent a Vehicle</a>
         <a href="#/rental-companies">For Rental Companies</a>

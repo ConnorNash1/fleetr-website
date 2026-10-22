@@ -1958,7 +1958,7 @@ function checkinWalkthrough() {
   const screens = [
     ["Open the texted link", el("ca-screen",
       progress(1),
-      el("ca-wordmark", h("img", { src: "/fleetr-horizontal-light.svg", alt: "fleetr", width: "188", height: "44" })),
+      el("ca-wordmark", h("span", { class: "fleetr-wordmark", role: "img", "aria-label": "fleetr" })),
       ...field("Reservation code", "KQT 482 913"),
       ...field("Last name", "Smith"),
       el("ca-spacer"),
