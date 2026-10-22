@@ -1914,95 +1914,97 @@ function DealershipsPage() {
 // into view. Inside, a mock of the real check-in plays one screen at a time
 // once the phone is on screen.
 function checkinWalkthrough() {
-  const SCREENS = 8;
+  const SCREENS = 9;
   const el = (cls, ...kids) => h("div", { class: cls }, ...kids);
   const field = (label, value) => [h("span", { class: "ca-label" }, label), el("ca-input", value)];
   const btn = (text, cls = "ca-btn-primary") => el("ca-btn " + cls, text);
   // A choice as the app draws it: a card with a radio mark, terracotta when picked.
   const radio = (text, on) => el("ca-btn ca-radio" + (on ? " on" : ""), text);
-  const steps = (n) => [
-    el("ca-back", "← Back"),
-    el("ca-step-label", `Step ${n} of ${SCREENS}`),
-    el("ca-step-bar", ...Array.from({ length: SCREENS }, (_, j) => h("span", { class: j < n ? "on" : null })))];
+  // The thin bar across the top: this screen's step fills in on arrival.
+  const progress = (n) => h("div", { class: "ca-progress", style: `--from: ${((n - 1) / SCREENS) * 100}%; --to: ${(n / SCREENS) * 100}%` }, h("i"));
+  const top = (n) => [progress(n), el("ca-back", "Back")];
   const row = (label, value) => el("ca-row", h("span", null, label), h("b", null, value));
   const choice = (name, price, wording, picked) => el("ca-card",
     el("ca-card-head", h("b", null, name), h("span", null, price)),
     wording && h("p", null, wording),
     el("ca-choices", radio("Accept", picked === 0), radio("Decline", picked === 1)));
+  // A car as the app lists it; the tapped one goes straight on.
+  const car = (name, meta, tap) => el("ca-car" + (tap ? " ca-tap" : ""), h("b", null, name), h("span", null, meta));
 
   const screens = [
     ["Open the texted link", el("ca-screen",
+      progress(1),
       el("ca-wordmark", h("img", { src: "/fleetr-horizontal-light.svg", alt: "fleetr", width: "188", height: "44" })),
-      ...field("Reservation Code", "KQT 482 913"),
-      btn("Scan License"),
-      el("ca-manual", "Enter details manually"),
-      ...field("License Plate", "ABC123"),
-      ...field("Plate Province / State", "NL - Newfoundland & Labrador"),
+      ...field("Reservation code", "KQT 482 913"),
+      ...field("Last name", "Smith"),
       el("ca-spacer"),
-      btn("Start Rental Process"))],
+      btn("Start check-in"),
+      el("ca-links", h("span", null, "Change pickup time"), h("span", null, "Cancel booking")))],
     ["Scan the license", el("ca-screen ca-camera",
+      progress(2),
       el("ca-frame",
         el("ca-licence", el("ca-lic-photo"), el("ca-lic-lines", h("span"), h("span"), h("span"), h("span"))),
         h("span", { class: "ca-scanline" })),
       el("ca-camera-text", "Scanning license"))],
     ["Add drivers", el("ca-screen",
-      ...steps(3),
-      h("h4", null, "Drivers"),
-      h("p", { class: "ca-sub" }, "Only drivers named on the rental agreement may drive the vehicle."),
-      el("ca-card", el("ca-card-head", h("b", null, "Add another driver?")),
-        el("ca-choices", radio("Yes", false), radio("No", true))),
+      ...top(3),
+      h("h4", null, "Additional drivers"),
+      btn("Add a driver", "ca-btn-line"),
       el("ca-spacer"),
-      btn("Continue →"))],
+      btn("Continue"))],
+    ["Choose coverages", el("ca-screen",
+      ...top(4),
+      h("h4", null, "Protection"),
+      choice("Collision damage waiver", "$29.99 per day", "Covers damage to the rental vehicle, less the deductible.", 0),
+      choice("Supplemental liability", "$16.99 per day", null, 1),
+      el("ca-spacer"),
+      btn("Continue"))],
+    ["Pick the car", el("ca-screen",
+      ...top(5),
+      h("h4", null, "Choose your car"),
+      car("2024 Toyota Corolla", "White · ABC123", true),
+      car("2023 Honda Civic", "Blue · KLM456"),
+      el("ca-manual", "Enter plate instead"))],
     ["Check the damage on file", el("ca-screen",
-      ...steps(4),
-      h("h4", null, "Pre-Existing Damage"),
-      el("ca-vehicle", el("ca-plate", "ABC123"), el("ca-vdetail", "Make and model")),
+      ...top(6),
+      h("h4", null, "Pre-existing damage"),
+      el("ca-vehicle", el("ca-plate", "ABC123"), el("ca-vdetail", "2024 Toyota Corolla · Small car")),
       el("ca-info", "The following damage has been documented on this vehicle.", h("br"), "You are not responsible for it."),
       el("ca-damage", "Rear bumper: light scratch"),
       el("ca-damage", "Front passenger wheel: curb rash"),
       el("ca-spacer"),
-      btn("I Understand, Continue →"))],
+      btn("I understand, continue"))],
     ["Photograph anything new", el("ca-screen",
-      ...steps(5),
-      h("h4", null, "Photos of Concern"),
+      ...top(7),
+      h("h4", null, "Inspection photos"),
       el("ca-optional", "Optional"),
-      h("p", { class: "ca-sub" }, "See any new damage that isn't listed? Photograph it now to protect yourself."),
       el("ca-photo", el("ca-photo-img"), el("ca-photo-text", h("b", null, "Photo 1"), h("span", null, "Driver door"))),
-      btn("Add Photos", "ca-btn-line"),
+      btn("Add photos", "ca-btn-line"),
       el("ca-spacer"),
-      btn("Continue →"))],
-    ["Choose coverages", el("ca-screen",
-      ...steps(6),
-      h("h4", null, "Coverages"),
-      h("p", { class: "ca-sub" }, "Choose the coverages you want for this rental. Each one is charged per day."),
-      choice("Collision Damage Waiver", "$29.99 per day", "Covers damage to the rental vehicle, less the deductible.", 0),
-      choice("Supplemental Liability", "$16.99 per day", null, 1),
-      el("ca-spacer"),
-      btn("Continue →"))],
-    ["Sign the contract", el("ca-screen",
-      ...steps(7),
-      h("h4", null, "Contract"),
-      h("p", { class: "ca-sub" }, "Review your rental agreement, then sign below to confirm it."),
-      el("ca-summary", row("Vehicle", "Make and model"), row("Out", "October 8, 2026"), row("Due", "October 11, 2026"), row("Daily rate", "$89.00")),
+      btn("Continue"))],
+    ["Sign the agreement", el("ca-screen",
+      ...top(8),
+      h("h4", null, "Review and sign"),
+      el("ca-summary", row("Vehicle", "Toyota Corolla"), row("Out", "October 8, 2026"), row("Due", "October 11, 2026"), row("Daily rate", "$89.00")),
+      el("ca-card ca-fold", h("b", null, "Rental agreement")),
       (() => {
         const t = document.createElement("template");
         t.innerHTML = '<svg class="ca-sig" viewBox="0 0 300 110" aria-hidden="true"><path d="M22 74c14-30 26-46 32-40 7 8-14 42-6 44 9 3 18-34 28-32 8 2-2 28 6 29 10 1 14-22 24-21 9 1 2 21 12 21 12 0 20-30 31-28 8 2-3 26 6 27 14 2 30-22 44-18 9 3 4 14 14 14 18 0 40-12 62-16"/></svg>';
-        return el("ca-sig-wrap", t.content.firstChild);
+        return el("ca-sig-wrap", t.content.firstChild, h("span", { class: "ca-sig-clear", "aria-hidden": "true" }));
       })(),
       el("ca-spacer"),
-      btn("Clear Signature", "ca-btn-line"),
       btn("Confirm"))],
     ["Ready to go", el("ca-screen ca-done",
+      progress(9),
       el("ca-spacer"),
       doneTick(),
-      h("h4", null, "You're Good to Go!"),
-      h("p", { class: "ca-sub" }, "Your inspection is complete and on file. Enjoy your rental."),
-      el("ca-summary ca-ticket", row("Vehicle", "Make and model"), row("Plate", "ABC123"), row("Return by", "Oct 11, 9:00 AM")),
+      h("h4", null, "You're good to go"),
+      el("ca-summary ca-ticket", row("Vehicle", "Toyota Corolla"), row("Plate", "ABC123"), row("Pickup", "October 8, 2026, 9:12 AM"), row("Status", "Inspection complete")),
       el("ca-spacer"),
       btn("Done"))],
   ];
   // How long each screen stays up before its button is tapped.
-  const holds = [2600, 2400, 2200, 2600, 2400, 2600, 3200, 3200];
+  const holds = [2600, 2400, 2200, 2600, 2200, 2600, 2400, 3200, 3200];
 
   const track = el("ca-track", ...screens.map(([, s]) => s));
   const caption = h("p", { class: "cs-caption", "aria-live": "polite" });
@@ -2028,7 +2030,7 @@ function checkinWalkthrough() {
     clearTimeout(timer); clearTimeout(tapTimer);
     if (!auto || !visible) return;
     timer = setTimeout(() => {
-      const cta = [...screens[idx][1].querySelectorAll(".ca-btn-primary")].pop();
+      const cta = [...screens[idx][1].querySelectorAll(".ca-btn-primary, .ca-tap")].pop();
       if (cta) cta.classList.add("tap");
       tapTimer = setTimeout(() => { show(idx + 1); restart(); }, 380);
     }, holds[idx]);

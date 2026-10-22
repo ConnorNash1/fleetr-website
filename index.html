@@ -844,7 +844,7 @@
   .ca-status-icons i:nth-child(2) { width: 14px; border-radius: 50% 50% 2px 2px; }
   .ca-status-icons i:nth-child(3) { width: 24px; background: none; box-shadow: inset 0 0 0 1.5px var(--ink), inset 0 0 0 3px var(--paper), inset 0 0 0 9px var(--ink); }
   .ca-track { display: flex; height: 100%; transform: translateX(calc(var(--i, 0) * -375px)); transition: transform .6s cubic-bezier(.65, 0, .35, 1); }
-  .ca-screen { flex: 0 0 375px; height: 100%; display: flex; flex-direction: column; padding: 70px 24px 34px; overflow: hidden; }
+  .ca-screen { flex: 0 0 375px; height: 100%; display: flex; flex-direction: column; padding: 70px 24px 34px; overflow: hidden; position: relative; }
   .ca-wordmark { margin: 30px 0 36px; line-height: 0; }
   .ca-wordmark img { display: block; height: 44px; width: auto; margin: 0 auto; }
   .ca-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 7px; }
@@ -857,12 +857,22 @@
   .ca-screen > * { flex-shrink: 0; }
   .ca-spacer { flex: 1 1 auto; min-height: 8px; }
   .ca-back { font-size: 15px; font-weight: 600; padding-bottom: 18px; }
-  .ca-step-label { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; text-align: center; margin-bottom: 12px; }
-  .ca-step-bar { display: flex; gap: 5px; margin-bottom: 20px; }
-  .ca-step-bar span { flex: 1; height: 4px; border-radius: 2px; background: var(--rule); }
-  .ca-step-bar span.on { background: var(--terra); }
-  .ca h4 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; text-align: center; margin-bottom: 10px; }
-  .ca-sub { font-size: 15.5px; color: var(--ink-70); text-align: center; line-height: 1.55; margin-bottom: 26px; }
+  /* The app's thin progress bar, under the status bar. */
+  .ca-progress { position: absolute; top: 50px; left: 0; right: 0; height: 3px; background: rgba(31, 30, 29, .12); }
+  .ca-progress i { display: block; height: 100%; width: var(--to); background: var(--terra); }
+  .ca-screen.on .ca-progress i { animation: ca-prog .5s .3s cubic-bezier(.4, 0, .2, 1) both; }
+  @keyframes ca-prog { from { width: var(--from); } }
+  .ca-links { display: flex; justify-content: center; gap: 20px; font-size: 14px; font-weight: 600; color: #C9603D; padding: 8px 0 4px; }
+  .ca-car { display: grid; gap: 4px; padding: 16px 18px; margin-bottom: 12px; background: #FFFFFF; border: 1.5px solid rgba(31, 30, 29, .12); border-radius: 14px; box-shadow: 0 1px 2px rgba(31, 30, 29, .05); transition: border-color .15s, box-shadow .15s; }
+  .ca-car b { font-size: 16.5px; }
+  .ca-car span { font-size: 14.5px; color: var(--ink-70); }
+  .ca-car.tap { border-color: var(--terra); box-shadow: 0 0 0 3px rgba(244, 132, 95, .14); }
+  .ca-fold { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; }
+  .ca-fold::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--ink-55); border-bottom: 2px solid var(--ink-55); transform: rotate(45deg); margin: -4px 4px 0 0; }
+  .ca-sig-clear { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 50%; background: rgba(244, 132, 95, .14) no-repeat center / 14px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2 2l10 10M12 2L2 12' stroke='%23C9603D' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); opacity: 0; }
+  .ca-screen.on .ca-sig-clear { animation: ca-clear-in .2s .9s both; }
+  @keyframes ca-clear-in { to { opacity: 1; } }
+  .ca h4 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; text-align: center; margin-bottom: 24px; }
   .ca-optional { text-align: center; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-55); margin-bottom: 14px; }
   .ca-card, .ca-vehicle, .ca-info, .ca-damage { background: var(--ink-06); border: 1px solid var(--rule); border-radius: 14px; }
   .ca-card { padding: 16px 18px 4px; margin-bottom: 12px; }
@@ -885,7 +895,7 @@
   .ca-row { display: flex; justify-content: space-between; gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--rule); font-size: 14.5px; }
   .ca-row:last-child { border-bottom: none; }
   .ca-row span { color: var(--ink-55); }
-  .ca-sig-wrap { background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow); height: 116px; display: grid; place-items: center; }
+  .ca-sig-wrap { position: relative; background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow); height: 116px; display: grid; place-items: center; }
   .ca-sig { width: 86%; }
   .ca-sig path { fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 700; stroke-dashoffset: 700; }
   .ca-screen.on .ca-sig path { animation: sig-draw 1.8s .5s ease-in-out forwards; }
@@ -909,20 +919,16 @@
   @media (prefers-reduced-motion: reduce) { .ca-track { transition: none; } .ca-sig path { stroke-dashoffset: 0; } }
 
   /* The mock app in the terracotta theme the app now uses: white cards and
-     fields, terracotta accents, the step just reached filling in, choices as
-     radio cards and the summary as a ticket. */
+     fields, terracotta accents, choices as radio cards and the summary as a
+     ticket. */
   .ca-input { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); }
   .ca-card, .ca-vehicle, .ca-info, .ca-damage { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); box-shadow: 0 1px 2px rgba(31, 30, 29, .05); }
   .ca-info { box-shadow: inset 3px 0 0 var(--terra), 0 1px 2px rgba(31, 30, 29, .05); }
   .ca-damage::before { background: var(--terra); }
   .ca-photo { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); }
-  .ca-step-label, .ca-back, .ca-manual { color: #C9603D; }
+  .ca-back, .ca-manual { color: #C9603D; }
   .ca-manual { text-decoration-color: var(--terra); }
   .ca-btn-primary.tap { background: #EE7550; }
-  .ca-step-bar span { height: 6px; border-radius: 999px; background: rgba(31, 30, 29, .12); }
-  .ca-step-bar span.on:not(:has(+ .on)) { background: rgba(31, 30, 29, .12) linear-gradient(var(--terra), var(--terra)) left / 0% 100% no-repeat; }
-  .ca-screen.on .ca-step-bar span.on:not(:has(+ .on)) { animation: ca-seg-fill .5s .3s cubic-bezier(.4, 0, .2, 1) forwards; }
-  @keyframes ca-seg-fill { to { background-size: 100% 100%; } }
   .ca-radio { display: flex; align-items: center; justify-content: center; gap: 10px; background: #FFFFFF; border: 1.5px solid rgba(31, 30, 29, .12); }
   .ca-radio::before { content: ""; flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(31, 30, 29, .3); background: #FFFFFF; }
   .ca-radio.on { border-color: var(--terra); background: rgba(244, 132, 95, .14); }
@@ -943,7 +949,7 @@
   }
   .ca-screen.on .ca-ticket { animation: ca-ticket-in .5s .45s cubic-bezier(.2, .8, .2, 1) both; }
   @keyframes ca-ticket-in { from { opacity: 0; transform: translateY(12px); } }
-  @media (prefers-reduced-motion: reduce) { .ca-screen.on .ca-step-bar span.on:not(:has(+ .on)) { animation: none; background-size: 100% 100%; } .ca-screen.on .ca-ticket { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .ca-screen.on .ca-progress i { animation: none; } .ca-screen.on .ca-ticket { animation: none; } .ca-sig-clear { opacity: 1; } }
 
   /* Book a demo dialog */
   .demo-dialog { width: min(480px, calc(100% - 32px)); max-height: calc(100% - 32px); margin: auto; padding: 0; border: 1px solid var(--rule); border-radius: var(--r-lg); background: var(--paper); color: var(--ink); box-shadow: var(--shadow-lg); }
