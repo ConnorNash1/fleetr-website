@@ -2108,12 +2108,12 @@ function checkinWalkthrough() {
 // ─── Privacy Policy and Terms of Use ─────────────────────────────────────────
 // The text is as written for fleetr, word for word. Each section is a heading
 // and its lines; a line given as an array is a list.
-const LEGAL_CONTACT = ["Connor Nash, operating as fleetr", ["Email: ", "connor@fleetr.ai"],
-  { mail: ["Connor Nash", "122 Cheeseman Drive", "St. John's NL\u00a0 A1H 0G7", "Canada"] }];
+const LEGAL_CONTACT = ["fleetr Technologies Corp.", ["Email: ", "connor@fleetr.ai"],
+  { mail: ["fleetr Technologies Corp.", "122 Cheeseman Drive", "St. John's NL\u00a0 A1H 0G7", "Canada"] }];
 const LEGAL = {
   privacy: {
     title: "Privacy Policy",
-    intro: ["fleetr is operated by Connor Nash, operating as fleetr, in St. John's, Newfoundland and Labrador, Canada. This policy explains what personal information we collect through fleetr.ai and the fleetr check-in app, why, and what we do with it."],
+    intro: ["fleetr is operated by fleetr Technologies Corp. in St. John's, Newfoundland and Labrador, Canada. This policy explains what personal information we collect through fleetr.ai, the fleetr check-in app and the fleetr staff app, why, and what we do with it."],
     sections: [
       ["Who is responsible for your information", [
         "When you rent a vehicle, your rental is with the rental company, not fleetr. The rental company decides what information is needed for your rental and is responsible for it. fleetr collects, stores and processes that information on the rental company's behalf to run the booking, check-in, return and records for your rental. For questions about how a rental company uses your information, contact them directly. For questions about fleetr, contact us.",
@@ -2134,6 +2134,10 @@ const LEGAL = {
       ["Text messages", [
         "We send texts about your booking and rental on behalf of the rental company. Every text identifies who it's from. Reply STOP to any text to opt out. If you opt out, you may stop receiving booking updates and reminders.",
       ]],
+      ["Rental company staff", [
+        "If you work for a rental company that uses fleetr, we collect your name, email address, role, branch and PIN, and keep a record of the actions you take in the staff app. We use this to sign you in, send password reset emails, control what you can see and do, and give your company a record of changes. Your company decides who has access and is responsible for this information.",
+        "If you use the AI assistant in the staff app, what you type and the information needed to answer it are sent to Anthropic to produce the answer.",
+      ]],
       ["Who we share it with", [
         "The rental company you book with, which receives your booking, check-in and rental information.",
         "Service providers that help us run fleetr, only as needed to provide their service:",
@@ -2141,6 +2145,8 @@ const LEGAL = {
           "Supabase, which stores our database and photos.",
           "Cloudflare, which runs parts of our service and checks for bots at checkout.",
           "Twilio, which sends text messages.",
+          "Resend, which sends staff account emails such as password resets.",
+          "Anthropic, which runs the AI assistant in the staff app. It receives what staff type into the assistant and the information needed to answer. Anthropic does not use it to train its models.",
           "Web3Forms, which delivers contact form messages to us.",
           "GitHub, which hosts our website.",
           "Google Fonts, OpenFreeMap, unpkg and jsDelivr, which provide fonts, map images and code libraries. These receive your IP address and browser details when pages load.",
@@ -2149,17 +2155,18 @@ const LEGAL = {
         "We may also disclose information if required by law.",
       ]],
       ["Where it's stored", [
-        "Our database and photos are stored in the United States, with Supabase on Amazon Web Services. Information stored outside Canada may be accessible to authorities in that country under its laws.",
+        "Our database and photos are stored in the United States, with Supabase on Amazon Web Services. Some service providers, including Twilio, Resend and Anthropic, also process information in the United States. Information stored outside Canada may be accessible to authorities in that country under its laws.",
       ]],
       ["How long we keep it", [
         "License details, photos, signatures and other personal information for a rental are deleted automatically 1 year after the rental is fully closed, meaning no balance is owed and no damage claim is open. A rental company may keep a rental from being deleted for longer if it is needed for a dispute, insurance claim or legal requirement.",
         "Phone verification records and verification code texts are deleted after 30 days.",
         "Deleted information may remain in backups for up to 7 days.",
+        "Staff account details are deleted 30 days after the rental company stops using fleetr. Records of staff actions are kept with the company's rental records.",
         "Contact form messages are kept as long as needed to respond.",
         "Rental records with personal information removed, such as dates, vehicle and charges, are kept for the rental company's business records.",
       ]],
       ["Cookies and browser storage", [
-        "fleetr.ai and the check-in app do not set cookies and do not use analytics or advertising tracking. fleetr.ai uses your browser's temporary session storage to remember map locations you've searched and to show your booking confirmation. This is cleared when you close the tab. Cloudflare's bot check collects browser and device signals to tell people from bots.",
+        "fleetr.ai, the check-in app and the staff app do not set cookies and do not use analytics or advertising tracking. fleetr.ai uses your browser's temporary session storage to remember map locations you've searched and to show your booking confirmation. This is cleared when you close the tab. Cloudflare's bot check collects browser and device signals to tell people from bots. The staff app keeps you signed in using your browser's storage.",
       ]],
       ["Your choices and rights", [
         "You can ask to access the personal information we hold about you, or ask us to correct it. For information about a rental, we may refer you to the rental company. You can withdraw consent to texts at any time by replying STOP. If you have a concern we can't resolve, you can contact the Office of the Privacy Commissioner of Canada.",
@@ -2172,7 +2179,7 @@ const LEGAL = {
   },
   terms: {
     title: "Terms of Use",
-    intro: ["These terms apply when you search for or book a vehicle on fleetr.ai or use the fleetr check-in app. fleetr is operated by Connor Nash, operating as fleetr, in St. John's, Newfoundland and Labrador, Canada. By booking, you agree to these terms."],
+    intro: ["These terms apply when you search for or book a vehicle on fleetr.ai or use the fleetr check-in app. fleetr is operated by fleetr Technologies Corp. in St. John's, Newfoundland and Labrador, Canada. By booking or checking in, you agree to these terms."],
     sections: [
       ["What fleetr is", [
         "fleetr is a booking and check-in platform. The vehicles listed on fleetr.ai belong to independent rental companies and dealerships. When you book, your reservation and rental agreement are with that company, not with fleetr. The rental company sets its own rates, coverages, rules, requirements and rental terms, and is responsible for the vehicle and your rental.",
