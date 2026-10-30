@@ -393,7 +393,7 @@
   .chip.active { background: var(--terra); color: var(--ink); border-color: var(--terra); }
   .chip.plain { padding-left: 14px; }
   .filters .sort { margin-left: auto; flex: none; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-55); padding-left: 12px; }
-  .filters .select { border-radius: 999px; padding-top: 7px; padding-bottom: 7px; font-size: 14px; color: var(--ink); }
+  .filters .select { border-radius: 999px; padding-top: 7px; padding-bottom: 7px; font-size: 16px; color: var(--ink); }
   .results { display: grid; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 1140px) { .results { grid-template-columns: minmax(0, 1fr) 42%; } }
   .results-list { padding: 28px 0 110px; min-width: 0; }
@@ -436,8 +436,11 @@
   /* A result is a row: the logo, the company and its branch, the price. */
   .card { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 18px 12px; border-bottom: 1px solid var(--rule); text-decoration: none; color: var(--ink); border-radius: var(--r); transition: background-color .12s; }
   .card:hover, .card.hot { background: var(--ink-06); }
-  .card-mark, .branch-mark { width: 72px; height: 72px; flex: none; border-radius: 16px; background: var(--paper); border: 1px solid var(--rule); box-shadow: var(--shadow); padding: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-  .card-mark img, .branch-mark img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .card-mark, .branch-mark { width: 72px; height: 72px; flex: none; border-radius: 16px; background: var(--paper); border: 1px solid #E2DFD9; padding: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .card-mark img, .branch-mark img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .total-price { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .total-price .save-pill { padding: 1px 8px; border-radius: 999px; background: #F4845F; color: #1F1E1D; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .total-price .was-price { color: var(--ink-55); font-size: 13px; font-weight: 400; }
   .no-logo { background: var(--ink-06); box-shadow: none; font-family: var(--display); font-size: 28px; font-weight: 600; color: var(--ink-70); }
   .card-body { display: grid; gap: 3px; min-width: 0; }
   .card-name { font-family: var(--display); font-size: 21px; font-weight: 500; line-height: 1.2; }
@@ -452,7 +455,7 @@
   .card-price span { color: var(--ink-55); font-size: 14px; }
   @media (max-width: 519px) {
     .card { grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; align-items: start; }
-    .card .card-mark { width: 56px; height: 56px; border-radius: 13px; padding: 6px; }
+    .card .card-mark { width: 56px; height: 56px; border-radius: 13px; }
     .card .card-price { grid-column: 2; flex-direction: row; align-items: baseline; justify-content: space-between; margin-top: 8px; }
   }
   .placeholder-photo { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--ink-55); background: repeating-linear-gradient(135deg, var(--ink-06) 0 1px, transparent 1px 14px); }
@@ -476,7 +479,7 @@
   .branch-head { display: flex; align-items: center; gap: 20px; }
   .branch-head h1 { font-size: clamp(32px, 5vw, 56px); }
   .branch-head .sub { color: var(--ink-55); margin-top: 10px; }
-  @media (max-width: 519px) { .branch-head { align-items: flex-start; gap: 14px; } .branch-head .branch-mark { width: 56px; height: 56px; border-radius: 13px; padding: 6px; } }
+  @media (max-width: 519px) { .branch-head { align-items: flex-start; gap: 14px; } .branch-head .branch-mark { width: 56px; height: 56px; border-radius: 13px; } }
   .branch-main { container-type: inline-size; min-width: 0; }
   .back-link { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px; font-size: 15px; font-weight: 600; color: var(--ink-70); text-decoration: none; }
   .back-link svg { width: 18px; height: 18px; }
@@ -575,7 +578,7 @@
   .bb-field span { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bb-class { display: block; border-top: 1px solid var(--rule-2); padding: 10px 14px; }
   .bb-class small { display: block; }
-  .bb-class select { width: 100%; border: none; background: transparent; font-size: 14px; padding: 2px 0; outline: none; }
+  .bb-class select { width: 100%; border: none; background: transparent; font-size: 16px; padding: 2px 0; outline: none; }
   .bb-note { text-align: center; font-size: 14px; color: var(--ink-55); margin: 12px 0 2px; }
   .book-box .cal-pop { left: -24px; right: -24px; }
   @media (min-width: 960px) { .book-box .cal-pop { left: auto; right: -24px; width: 720px; } }

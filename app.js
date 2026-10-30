@@ -290,28 +290,38 @@ function quote(cls, days, coverages, taxes) {
   return { lines, rentalCount, subtotal, taxLines, total, savings };
 }
 
-// "You save" sits right under the rental's own lines, before coverages and tax.
+// A total, the one way it reads on fleetr.ai: "$245 total", then "Save $35" in
+// a pill and the full price struck through. In dollars, never a percentage.
+function totalWords(total, savings, cents) {
+  const t = Number(total) || 0, s = round2(Number(savings) || 0);
+  return { total: `${money(t, cents)} total`, save: s > 0 ? `Save ${money(s)}` : null, was: s > 0 ? money(round2(t + s), cents) : null };
+}
+function totalPrice(total, savings, cents) {
+  const w = totalWords(total, savings, cents);
+  return h("span", { class: "total-price" }, h("span", null, w.total),
+    w.save && h("span", { class: "save-pill" }, w.save), w.was && h("s", { class: "was-price" }, w.was));
+}
+
 function quoteLines(q) {
   const row = (l) => h("div", { class: "line" }, h("span", { class: "lbl" }, l.label), h("span", null, money(l.amount, true)));
   const at = q.rentalCount ?? q.lines.length;
   return h("div", { class: "lines" },
     q.lines.slice(0, at).map(row),
-    q.savings > 0 && h("div", { class: "line muted" }, h("span", null, `You save ${money(q.savings)}`)),
     q.lines.slice(at).map(row),
     q.taxLines.length
       ? q.taxLines.map((l) => h("div", { class: "line muted" }, h("span", null, l.label), h("span", null, money(l.amount, true))))
       : h("div", { class: "line muted" }, h("span", null, "Taxes"), h("span", null, "None")),
-    h("div", { class: "line total" }, h("span", null, "Total"), h("span", null, money(q.total, true))));
+    h("div", { class: "line total" }, totalPrice(q.total, q.savings, true)));
 }
 
 // ─── Listing helpers ─────────────────────────────────────────────────────────
 const cityOf = (b) => (b.citiesServed && b.citiesServed[0]) || (b.airportCodes && b.airportCodes[0]) || "";
 function perksOf(b) {
   const out = [];
-  if (b.airportPickup) out.push({ icon: "lPlane", name: "Airport pickup", text: b.airportCodes && b.airportCodes.length ? `At ${b.airportCodes.join(", ")}` : "Picked up at the airport" });
-  if (b.delivery) out.push({ icon: "lTruck", name: "Delivery", text: "They can bring the vehicle to you" });
-  if (b.lockboxPickup) out.push({ icon: "lKey", name: "Pickup any time", text: "Pick up outside opening hours from a lockbox" });
-  if (b.afterHoursDropoff) out.push({ icon: "lMoon", name: "Returns any time", text: "Return outside opening hours with the key drop" });
+  if (b.airportPickup) out.push({ icon: "lPlane", name: "Airport pickup", text: b.airportCodes && b.airportCodes.length ? `At ${b.airportCodes.join(", ")}` : "Pick up at the airport" });
+  if (b.delivery) out.push({ icon: "lTruck", name: "Delivery", text: "Get the vehicle brought to you" });
+  if (b.lockboxPickup) out.push({ icon: "lKey", name: "Pick up anytime from the lockbox", text: "Outside opening hours" });
+  if (b.afterHoursDropoff) out.push({ icon: "lMoon", name: "Return anytime with the key drop", text: "Outside opening hours" });
   return out;
 }
 const HOURS_DAYS = [["mon", "Monday"], ["tue", "Tuesday"], ["wed", "Wednesday"], ["thu", "Thursday"], ["fri", "Friday"], ["sat", "Saturday"], ["sun", "Sunday"]];
@@ -776,13 +786,15 @@ const skeletonCheckout = () => loadingShell("Loading\u2026",
 // per place per visit. A three or four letter search is read as an airport
 // code.
 const ATLANTIC = [47.2, -61.0];
+// Short names the map search does not know, or reads as somewhere else.
+const PLACE_ALIASES = { cbs: "Conception Bay South, Newfoundland and Labrador" };
 const geoCache = {};
 async function geocode(place) {
   const key = place.trim().toLowerCase();
   if (!key) return null;
   if (key in geoCache) return geoCache[key];
   try { const s = sessionStorage.getItem(`fleetr.geo.${key}`); if (s) return (geoCache[key] = JSON.parse(s)); } catch (e) { /* private mode */ }
-  const term = /^[a-z]{3,4}$/.test(key) ? `${key.toUpperCase()} airport` : place.trim();
+  const term = PLACE_ALIASES[key] || (/^[a-z]{3,4}$/.test(key) ? `${key.toUpperCase()} airport` : place.trim());
   let hit = null;
   try {
     const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ca,us&q=${encodeURIComponent(term)}`,
@@ -919,7 +931,12 @@ function SearchPage(q) {
     return page;
   }
 
-  rpc("public_search_branches", { p_query: where, p_pickup: asTimestamp(tripPu(trip)), p_return: asTimestamp(tripRt(trip)), p_categories: cats.length ? cats : null })
+  // The place as a point, then branches near it, nearest first. A point that
+  // cannot be found in time still searches the words.
+  const words = { p_query: where, p_pickup: asTimestamp(tripPu(trip)), p_return: asTimestamp(tripRt(trip)), p_categories: cats.length ? cats : null };
+  Promise.race([geocode(where), new Promise((r) => setTimeout(() => r(null), 3000))])
+    .then((c) => (c ? rpc("public_search_branches", { ...words, p_lat: c[0], p_lng: c[1] }).catch(() => rpc("public_search_branches", words))
+                    : rpc("public_search_branches", words)))
     .then((res) => {
       if (!res || !res.ok) {
         set(listEl, emptyView({ kicker: "Check your search", title: "That search didn't work.", text: reasonText(res && res.reason), branches: [] }));
@@ -966,7 +983,7 @@ function SearchPage(q) {
               b.trip && b.trip.note && h("div", { class: "card-note" }, b.trip.note)),
             h("div", { class: "card-price" },
               h("div", null, h("b", null, branchPerDay(b))),
-              h("span", null, `${money(b.total)} total`)));
+              totalPrice(b.total, b.savings)));
           cards[b.locationId] = card;
           return card;
         })));
@@ -1089,7 +1106,7 @@ function branchView(id, res, trip, q) {
           c.seats != null && h("span", null, `${c.seats} seats`),
           c.bags != null && h("span", null, `${c.bags} bag${c.bags === 1 ? "" : "s"}`)),
         c.trip && c.trip.moved && c.trip.note && h("div", { class: "class-note" }, c.trip.note)),
-      h("div", { class: "class-price" }, h("b", null, classPerDay(c)), h("span", null, `${money(c.total, true)} total`)));
+      h("div", { class: "class-price" }, h("b", null, classPerDay(c)), totalPrice(c.total, c.price && c.price.savings, true)));
     rows[c.classId] = row;
     return row;
   };
@@ -1134,13 +1151,12 @@ function branchView(id, res, trip, q) {
         line("Pick-up", `${fmtDay(t.puDate)}, ${fmtTime(t.puTime)}`),
         line("Return", `${fmtDay(t.rtDate)}, ${fmtTime(t.rtTime)}`),
         rentalLines(chosen, cDays).map((l) => line(l.label, money(l.amount, true))),
-        qte.savings > 0 && line("You save", money(qte.savings)),
         qte.taxLines.length ? qte.taxLines.map((t) => line(t.label, money(t.amount, true))) : line("Tax", "None")),
-      h("div", { class: "bb-total" }, h("span", null, "Total"), h("b", null, money(qte.total, true))),
+      h("div", { class: "bb-total" }, totalPrice(qte.total, qte.savings, true)),
       h("button", { type: "button", class: "btn btn-primary btn-block", onclick: reserve }, "Reserve"),
       h("p", { class: "bb-note" }, "You won't be charged now. Pay at pickup."));
     set(bar,
-      h("div", null, h("b", null, `${money(qte.total, true)} total`), h("small", null, `${chosen.name} · ${cDays} day${cDays === 1 ? "" : "s"}`)),
+      h("div", null, totalPrice(qte.total, qte.savings, true), h("small", null, `${chosen.name} · ${cDays} day${cDays === 1 ? "" : "s"}`)),
       h("button", { type: "button", class: "btn btn-primary", onclick: reserve }, "Reserve"));
   };
   drawBox();
@@ -1155,6 +1171,7 @@ function branchView(id, res, trip, q) {
     b.minimumAge != null && { icon: "lId", name: "Minimum age", text: `${b.minimumAge} years old` },
     b.deposit != null && Number(b.deposit) > 0 && { icon: "lWallet", name: "Deposit", text: `${money(b.deposit, true)}, held at pickup` },
     b.paymentMethods && b.paymentMethods.length && { icon: "lCard", name: "Payment", text: b.paymentMethods.join(", ") },
+    b.ownInsuranceRequired && { icon: "deposit", name: "Insurance", text: "Your own auto insurance required" },
   ].filter(Boolean);
 
   const mapEl = h("div", { class: "branch-map map" });
@@ -1241,7 +1258,8 @@ const fmtPhone = (d) => (d && d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3,
 
 function checkoutView(id, b, cls, trip, days, backHref) {
   const taxes = b.salesTaxes || [];
-  const coverages = cls.coverages || [];
+  // Where the renter brings their own insurance, no protection is offered.
+  const coverages = b.ownInsuranceRequired ? [] : cls.coverages || [];
   const choice = {};   // productId -> true / false
   coverages.forEach((c) => { if (c.required) choice[c.productId] = true; });
   const form = { first: "", last: "", phone: "", email: "" };
