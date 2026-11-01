@@ -1256,6 +1256,10 @@ function CheckoutPage(id, q) {
 
 const fmtPhone = (d) => (d && d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : d || "");
 
+// The same for every company: $0 with damage protection, the full cost without
+// it. Products have no type, so a damage one is known by its name.
+const isDamageProtection = (c) => /damage|collision|\b(?:cdw|ldw)\b|loss waiver/i.test(c.name || "");
+
 function checkoutView(id, b, cls, trip, days, backHref) {
   const taxes = b.salesTaxes || [];
   // Where the renter brings their own insurance, no protection is offered.
@@ -1315,13 +1319,16 @@ function checkoutView(id, b, cls, trip, days, backHref) {
       set(card, 
         h("div", { class: "cov-head" }, h("b", null, c.name), h("span", null, `${money(c.pricePerDay, true)} / day`)),
         c.wording && h("p", null, c.wording),
+        isDamageProtection(c) && h("p", null, "You pay $0 for damage."),
         c.required
           ? h("span", { class: "included" }, "Included with this rental")
           : h("div", { class: "segs", role: "group", "aria-label": c.name },
               h("button", { type: "button", class: choice[c.productId] === true ? "on" : "", "aria-pressed": String(choice[c.productId] === true),
                 onclick: () => { choice[c.productId] = true; covErr.textContent = ""; draw(); drawSummary(); } }, "Accept"),
               h("button", { type: "button", class: choice[c.productId] === false ? "on" : "", "aria-pressed": String(choice[c.productId] === false),
-                onclick: () => { choice[c.productId] = false; covErr.textContent = ""; draw(); drawSummary(); } }, "Decline")));
+                onclick: () => { choice[c.productId] = false; covErr.textContent = ""; draw(); drawSummary(); } }, "Decline")),
+        !c.required && choice[c.productId] === false && isDamageProtection(c)
+          && h("p", { style: { marginTop: "10px" } }, "You're responsible for the full cost of any damage. Your own insurance or credit card may cover it."));
     };
     draw();
     return card;
@@ -1997,7 +2004,7 @@ function checkinWalkthrough() {
     ["Choose coverages", el("ca-screen",
       ...top(4),
       h("h4", null, "Protection"),
-      choice("Collision damage waiver", "$29.99 per day", "Covers damage to the rental vehicle, less the deductible.", 0),
+      choice("Collision damage waiver", "$29.99 per day", "You pay $0 for damage.", 0),
       choice("Supplemental liability", "$16.99 per day", null, 1),
       el("ca-spacer"),
       btn("Continue"))],
