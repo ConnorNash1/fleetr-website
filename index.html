@@ -208,6 +208,16 @@
   .seg-label { font-size: 12.5px; font-weight: 600; }
   .seg input { border: none; outline: none; background: transparent; font-size: 16px; padding: 0; width: 100%; }
   .seg input::placeholder, .seg-value.empty { color: var(--ink-55); }
+  /* Places as the renter types, under the Where box. */
+  .seg--where { position: relative; }
+  .place-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30; display: grid; padding: 6px; background: var(--paper); border: 1px solid var(--rule-2); border-radius: 14px; box-shadow: var(--shadow-lg); min-width: 280px; }
+  .place-list[hidden] { display: none; }
+  .place-opt { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; text-align: left; color: var(--ink); font-size: 15px; }
+  .place-opt svg { width: 18px; height: 18px; flex: none; color: var(--ink-55); }
+  .place-opt span { display: flex; flex-direction: column; min-width: 0; }
+  .place-opt small { color: var(--ink-55); font-size: 13px; }
+  .place-opt:hover, .place-opt.active { background: var(--ink-06); }
+  .card-km { margin-top: 2px; font-size: 14px; font-weight: 600; color: var(--ink-70); }
   .seg-value { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .seg.is-open { background: var(--paper); box-shadow: var(--shadow); }
   .search-go { position: relative; overflow: hidden; transition: background-color .15s, transform .15s, box-shadow .15s; margin: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 15px 22px; border-radius: 999px; background: var(--terra); color: var(--ink); font-weight: 600; }

@@ -315,7 +315,10 @@ function quoteLines(q) {
 }
 
 // ─── Listing helpers ─────────────────────────────────────────────────────────
-const cityOf = (b) => (b.citiesServed && b.citiesServed[0]) || (b.airportCodes && b.airportCodes[0]) || "";
+// The branch's town: the old cities served where a branch still has them, else
+// the town in its address ("1 Water St, St. John's, NL, ...").
+const cityOf = (b) => (b.citiesServed && b.citiesServed[0]) || String(b.address || "").split(",").map((x) => x.trim())[1]
+  || (b.airportCodes && b.airportCodes[0]) || "";
 function perksOf(b) {
   const out = [];
   // A free ride from the airport: the branch picks the renter up, or covers
@@ -621,17 +624,61 @@ function Calendar({ trip, focus, onChange, onDone }) {
 }
 
 // ─── Search pill ─────────────────────────────────────────────────────────────
-function SearchPill({ where, trip, category, compact, onSearch }) {
-  const state = { where: where || "", trip: { ...trip }, category: category || "" };
+function SearchPill({ where, point, trip, category, compact, onSearch }) {
+  // point: the place picked from the suggestions, [lat, lng], until the
+  // words are changed again.
+  const state = { where: where || "", point: point || null, trip: { ...trip }, category: category || "" };
   const root = h("div", { class: `search${compact ? " compact" : ""}` });
   let cal = null, openSeg = null;
   const errorEl = h("div", { class: "search-error", role: "alert" });
 
+  // Suggestions under the box as the place is typed; arrows move through
+  // them, Enter or a tap picks one.
+  const listId = compact ? "where-c-list" : "where-list";
+  const suggestEl = h("div", { class: "place-list", id: listId, role: "listbox", hidden: true });
+  let hits = [], active = -1, timer = null, asked = 0;
+  const drawHits = () => {
+    set(suggestEl, hits.map((p, i) => h("button", {
+      type: "button", role: "option", id: `${listId}-${i}`, class: `place-opt${i === active ? " active" : ""}`, "aria-selected": i === active ? "true" : "false",
+      onmousedown: (e) => e.preventDefault(), onclick: () => pick(p),
+    }, icon(/airport|\u00b7/i.test(p.name) ? "plane" : "pin", "1.8"), h("span", null, h("b", null, p.name), p.sub && h("small", null, p.sub)))));
+    suggestEl.hidden = hits.length === 0;
+    whereInput.setAttribute("aria-expanded", hits.length ? "true" : "false");
+    if (active >= 0) whereInput.setAttribute("aria-activedescendant", `${listId}-${active}`); else whereInput.removeAttribute("aria-activedescendant");
+  };
+  const hideHits = () => { hits = []; active = -1; drawHits(); };
+  const pick = (p) => {
+    state.where = p.sub ? `${p.name}, ${p.sub}` : p.name;
+    state.point = p.at;
+    whereInput.value = state.where;
+    hideHits();
+    errorEl.textContent = "";
+  };
   const whereInput = h("input", {
-    id: compact ? "where-c" : "where", type: "text", placeholder: "City or airport code", autocomplete: "off",
+    id: compact ? "where-c" : "where", type: "text", placeholder: "City, address or airport code", autocomplete: "off",
     value: state.where, maxlength: "100", enterkeyhint: "search",
-    oninput: (e) => { state.where = e.target.value; errorEl.textContent = ""; },
-    onkeydown: (e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } },
+    role: "combobox", "aria-autocomplete": "list", "aria-controls": listId, "aria-expanded": "false",
+    oninput: (e) => {
+      state.where = e.target.value; state.point = null; errorEl.textContent = "";
+      clearTimeout(timer);
+      const term = e.target.value, ticket = ++asked;
+      if (term.trim().length < 2) { hideHits(); return; }
+      timer = setTimeout(() => placeSuggestions(term).then((found) => {
+        if (ticket !== asked) return;
+        hits = found; active = -1; drawHits();
+      }), 250);
+    },
+    onkeydown: (e) => {
+      if (e.key === "ArrowDown" && hits.length) { e.preventDefault(); active = (active + 1) % hits.length; drawHits(); return; }
+      if (e.key === "ArrowUp" && hits.length) { e.preventDefault(); active = (active - 1 + hits.length) % hits.length; drawHits(); return; }
+      if (e.key === "Escape" && hits.length) { e.preventDefault(); hideHits(); return; }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (active >= 0 && hits[active]) { pick(hits[active]); return; }
+        submit();
+      }
+    },
+    onblur: () => setTimeout(hideHits, 150),
   });
   const puValue = h("span", { class: "seg-value" });
   const rtValue = h("span", { class: "seg-value" });
@@ -663,17 +710,18 @@ function SearchPill({ where, trip, category, compact, onSearch }) {
 
   const submit = () => {
     const t = state.trip;
-    if (!state.where.trim()) { errorEl.textContent = "Where are you renting? Enter a city or airport code."; whereInput.focus(); return; }
+    if (!state.where.trim()) { errorEl.textContent = "Where are you renting? Enter a city, an address or an airport code."; whereInput.focus(); return; }
     if (!t.puDate || !t.rtDate) { errorEl.textContent = "Choose your pick-up and return dates."; open(t.puDate ? rtSeg : puSeg, t.puDate ? "end" : "start"); return; }
     if (tripRt(t) <= tripPu(t)) { errorEl.textContent = "Choose a return time after the pick-up."; open(rtSeg, "end"); return; }
     close();
-    onSearch({ where: state.where.trim(), trip: { ...t }, category: state.category });
+    hideHits();
+    onSearch({ where: state.where.trim(), point: state.point, trip: { ...t }, category: state.category });
   };
 
   add(root,
     h("form", { class: "search-pill", role: "search", onsubmit: (e) => { e.preventDefault(); submit(); } },
-      h("div", { class: "seg", onclick: () => whereInput.focus() },
-        h("label", { class: "seg-label", for: whereInput.id }, "Where"), whereInput),
+      h("div", { class: "seg seg--where", onclick: () => whereInput.focus() },
+        h("label", { class: "seg-label", for: whereInput.id }, "Where"), whereInput, suggestEl),
       puSeg, rtSeg,
       h("button", { type: "submit", class: "search-go", "aria-label": "Search" }, icon("search", "2.6"), h("span", { class: "go-text" }, "Search"))),
     errorEl);
@@ -697,9 +745,16 @@ function SearchPill({ where, trip, category, compact, onSearch }) {
   return root;
 }
 
-function searchParams({ where, trip, category }) {
-  return { where, pu: tripPu(trip), rt: tripRt(trip), cat: category || null };
+// point, a place picked from the suggestions, rides along as lat and lng, so
+// the search and the way back to it use that place exactly.
+function searchParams({ where, point, trip, category }) {
+  return { where, lat: point ? Number(point[0]).toFixed(5) : null, lng: point ? Number(point[1]).toFixed(5) : null,
+    pu: tripPu(trip), rt: tripRt(trip), cat: category || null };
 }
+const pointFrom = (q) => {
+  const lat = Number(q.get("lat")), lng = Number(q.get("lng"));
+  return q.get("lat") && q.get("lng") && Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+};
 
 // ─── Home ────────────────────────────────────────────────────────────────────
 function HomePage(q) {
@@ -817,6 +872,49 @@ async function geocode(place) {
   try { sessionStorage.setItem(`fleetr.geo.${key}`, JSON.stringify(hit)); } catch (e) { /* private mode */ }
   return hit;
 }
+// Places as the renter types: cities, towns, streets and addresses from
+// Photon (OpenStreetMap, built for typing ahead, so "Torb" finds Torbay), and
+// for three or four letters the airport with that code, from Nominatim, as
+// geocode reads it ("YYT" is St. John's airport). Canada and the US. Each is
+// { name, sub, at: [lat, lng] }.
+const placeCache = {};
+async function placeSuggestions(text) {
+  const term = text.trim();
+  const key = term.toLowerCase();
+  if (term.length < 2) return [];
+  if (key in placeCache) return placeCache[key];
+  const out = [];
+  const seen = new Set();
+  const push = (p) => {
+    const k = `${p.name}|${p.sub}`.toLowerCase();
+    if (p.name && Number.isFinite(p.at[0]) && Number.isFinite(p.at[1]) && !seen.has(k)) { seen.add(k); out.push(p); }
+  };
+  const airport = /^[a-z]{3,4}$/i.test(term)
+    ? fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ca,us&addressdetails=1&q=${encodeURIComponent(`${term.toUpperCase()} airport`)}`,
+        { headers: { "Accept-Language": "en-CA" } }).then((r) => r.json()).catch(() => [])
+    : Promise.resolve([]);
+  const photon = fetch(`https://photon.komoot.io/api/?limit=8&lang=en&bbox=-170,15,-50,84&q=${encodeURIComponent(term)}`)
+    .then((r) => r.json()).catch(() => null);
+  const [air, ph] = await Promise.all([airport, photon]);
+  (Array.isArray(air) ? air : []).forEach((a) => {
+    const ad = a.address || {};
+    push({ name: `${term.toUpperCase()} \u00b7 ${String(a.display_name || "").split(",")[0]}`,
+      sub: [ad.city || ad.town || ad.village, ad.state].filter(Boolean).join(", "), at: [Number(a.lat), Number(a.lon)] });
+  });
+  ((ph && ph.features) || []).forEach((f) => {
+    const p = f.properties || {};
+    if (!["CA", "US"].includes(String(p.countrycode || "").toUpperCase())) return;
+    const street = p.housenumber && p.street ? `${p.housenumber} ${p.street}` : null;
+    const name = street || p.name;
+    const sub = [street ? p.city || p.district : (p.city && p.city !== p.name ? p.city : null), p.state].filter(Boolean).join(", ");
+    push({ name, sub, at: [Number(f.geometry.coordinates[1]), Number(f.geometry.coordinates[0])] });
+  });
+  placeCache[key] = out.slice(0, 7);
+  return placeCache[key];
+}
+// A distance in words: "3.4 km away", or "12 km away" from 10 km on.
+const kmAway = (km) => (km == null ? "" : `${Number(km) < 10 ? Number(km).toFixed(1) : Math.round(Number(km))} km away`);
+
 // How each vehicle type reads in a sentence.
 const CATEGORY_NOUN = { Car: "car", SUV: "SUV", Minivan: "minivan", Truck: "truck", Van: "van", Electric: "electric vehicle", Luxury: "luxury vehicle", Other: "vehicle of that type" };
 const CATEGORY_ONE  = { Car: "a car", SUV: "an SUV", Minivan: "a minivan", Truck: "a truck", Van: "a van", Electric: "an electric vehicle", Luxury: "a luxury vehicle", Other: "a vehicle of that type" };
@@ -830,15 +928,16 @@ const placeName = (s) => (/^[a-z]{3,4}$/i.test(s.trim()) ? s.trim().toUpperCase(
 
 function SearchPage(q) {
   const where = (q.get("where") || "").trim();
+  const point = pointFrom(q);
   const trip = tripFrom(q);
   const cats = catList(q.get("cat"));
   const category = cats.join(",");
   let sort = q.get("sort") || "recommended";
-  const params = (extra) => ({ ...searchParams({ where, trip, category }), sort: sort === "recommended" ? null : sort, ...extra });
-  const backTo = () => ({ where, sort: sort === "recommended" ? null : sort });
-  const place = placeName(where);
+  const params = (extra) => ({ ...searchParams({ where, point, trip, category }), sort: sort === "recommended" ? null : sort, ...extra });
+  const backTo = () => ({ where, point, sort: sort === "recommended" ? null : sort });
+  const place = placeName(where.split(",")[0]);
 
-  const pill = SearchPill({ where, trip, category, compact: true, onSearch: (s) => go("/search", { ...searchParams(s), sort: params().sort }) });
+  const pill = SearchPill({ where, point, trip, category, compact: true, onSearch: (s) => go("/search", { ...searchParams(s), sort: params().sort }) });
   const listEl = h("div", { class: "results-list" }, skeletonResults());
   const mapBox = h("div", { class: "map", role: "region", "aria-label": "Map" });
   const mapCol = h("div", { class: "results-map" }, mapBox);
@@ -942,13 +1041,18 @@ function SearchPage(q) {
     return page;
   }
 
-  // The place as a point, then branches near it, nearest first. A point that
-  // cannot be found in time still searches the words.
-  const words = { p_query: where, p_pickup: asTimestamp(tripPu(trip)), p_return: asTimestamp(tripRt(trip)), p_categories: cats.length ? cats : null };
-  Promise.race([geocode(where), new Promise((r) => setTimeout(() => r(null), 3000))])
-    .then((c) => (c ? rpc("public_search_branches", { ...words, p_lat: c[0], p_lng: c[1] }).catch(() => rpc("public_search_branches", words))
-                    : rpc("public_search_branches", words)))
+  // The place as a point: the one picked, or the words looked up. Then the
+  // branches within 50 km of it, nearest first, or the nearest 5 when none is
+  // (public_search_near).
+  const ask = { p_place: where, p_pickup: asTimestamp(tripPu(trip)), p_return: asTimestamp(tripRt(trip)), p_categories: cats.length ? cats : null };
+  Promise.resolve(point || Promise.race([geocode(where), new Promise((r) => setTimeout(() => r(null), 4000))]))
+    .then((c) => (c ? rpc("public_search_near", { ...ask, p_lat: c[0], p_lng: c[1] }) : { ok: false, reason: "place_not_found" }))
     .then((res) => {
+      if (res && res.reason === "place_not_found") {
+        set(listEl, emptyView({ kicker: "Check your search", title: `We couldn't find ${place}.`,
+          text: "Pick a place from the list as you type, or try a nearby town or an airport code.", branches: [] }));
+        return;
+      }
       if (!res || !res.ok) {
         set(listEl, emptyView({ kicker: "Check your search", title: "That search didn't work.", text: reasonText(res && res.reason), branches: [] }));
         return;
@@ -975,7 +1079,9 @@ function SearchPage(q) {
       }
       set(listEl,
         h("div", { class: "results-head" },
-          h("h1", null, `${open.length} ${open.length === 1 ? "company" : "companies"} with ${cats.length ? orList(cats.map((c) => CATEGORY_ONE[c])) : "vehicles"} free in ${place}`),
+          res.nearest
+            ? h("h1", null, `Nothing within ${res.radiusKm || 50} km of ${place}. The nearest ${open.length === 1 ? "company" : "companies"} with ${cats.length ? orList(cats.map((c) => CATEGORY_ONE[c])) : "vehicles"} free:`)
+            : h("h1", null, `${open.length} ${open.length === 1 ? "company" : "companies"} with ${cats.length ? orList(cats.map((c) => CATEGORY_ONE[c])) : "vehicles"} free near ${place}`),
           h("p", null, `${tripRange(trip)} · ${days} day${days === 1 ? "" : "s"} · prices before tax`)),
         h("div", { class: "cards" }, open.map((b) => {
           const perks = perksOf(b);
@@ -989,7 +1095,8 @@ function SearchPage(q) {
             logoBlock(b, "card-mark"),
             h("div", { class: "card-body" },
               h("div", { class: "card-name" }, companyOf(b)),
-              h("div", { class: "card-sub" }, branchLine(b, cityOf(b))),
+              h("div", { class: "card-sub" }, branchLine(b, b.address)),
+              b.distanceKm != null && h("div", { class: "card-km" }, kmAway(b.distanceKm)),
               perks.length > 0 && h("div", { class: "tags" }, perks.map((p) => h("span", { class: "tag" }, p.name))),
               b.trip && b.trip.note && h("div", { class: "card-note" }, b.trip.note)),
             h("div", { class: "card-price" },
@@ -1025,6 +1132,7 @@ function branchHref(id, trip, category, cls, back) {
   if (category) qs.set("cat", category);
   if (cls) qs.set("cls", cls);
   if (back && back.where) qs.set("where", back.where);
+  if (back && back.point) { qs.set("lat", Number(back.point[0]).toFixed(5)); qs.set("lng", Number(back.point[1]).toFixed(5)); }
   if (back && back.sort) qs.set("sort", back.sort);
   return `#/branch/${encodeURIComponent(id)}?${qs}`;
 }
@@ -1091,7 +1199,7 @@ function branchView(id, res, trip, q) {
   const classes = res.classes || [];
   const wantCats = catList(q.get("cat"));
   const wantCat = wantCats.join(",");
-  const back = { where: q.get("where") || "", sort: q.get("sort") || null };
+  const back = { where: q.get("where") || "", point: pointFrom(q), sort: q.get("sort") || null };
   const days = res.days || rentalDays(tripPu(trip), tripRt(trip));
   const taxes = b.salesTaxes || [];
 
@@ -1188,7 +1296,7 @@ function branchView(id, res, trip, q) {
   const mapEl = h("div", { class: "branch-map map" });
   const photo = photoBlock(b, "pickup-photo");
   const perks = perksOf(b);
-  const backHref = `#/search?${new URLSearchParams(Object.entries({ ...searchParams({ where: back.where, trip, category: wantCat }), sort: back.sort })
+  const backHref = `#/search?${new URLSearchParams(Object.entries({ ...searchParams({ where: back.where, point: back.point, trip, category: wantCat }), sort: back.sort })
     .filter(([, v]) => v != null && v !== "")).toString()}`;
   const content = h("div", { class: "branch-main" },
     res.trip && res.trip.note && h("div", { class: "notice soft trip-notice", style: { marginBottom: "28px" } },
