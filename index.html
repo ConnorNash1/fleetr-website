@@ -76,7 +76,7 @@
   button { cursor: pointer; background: none; border: none; }
   img { display: block; max-width: 100%; }
   ::selection { background: var(--rule); }
-  :focus-visible { outline: 2px solid var(--terra); outline-offset: 3px; border-radius: 4px; }
+  :focus-visible { outline: 2px solid var(--terra); outline-offset: 2px; border-radius: 4px; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   .wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 20px; }
@@ -627,7 +627,7 @@
   .segs button.on { background: var(--terra); color: var(--ink); }
   .included { display: inline-block; margin-top: 12px; font-size: 12.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--ink-06); }
   .check { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; cursor: pointer; margin-top: 18px; }
-  .check input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--ink); }
+  .check input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--terra); }
   .verify-box { border: 1px solid var(--rule-2); border-radius: var(--r); padding: 20px; }
   /* Six digits spread evenly across a box sized to them: the space after
      each digit (letter-spacing) is matched by the left padding, so the gaps
@@ -727,7 +727,7 @@
   .sc-check { stroke-width: 2.2; }
   .reel-card.on .sc-body, .reel-panel-icon .sc-body { fill: var(--ink); }
   .reel-card.on .sc-check, .reel-panel-icon .sc-check { stroke: var(--terra); }
-  .reel-card:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .reel-card:focus-visible { outline: 2px solid var(--terra); outline-offset: 2px; }
   .reel-panel { min-height: 250px; }
   .reel-panel.swap > * { animation: reel-in .5s cubic-bezier(.22, 1, .36, 1) backwards; }
   .reel-panel.swap > :nth-child(2) { animation-delay: .04s; }
@@ -1008,6 +1008,15 @@
   .footer small { grid-column: 1 / -1; padding-top: 22px; border-top: 1px solid var(--rule); color: var(--ink-55); font-size: 14px; }
 
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation-duration: .01ms !important; } }
+  /* Checkboxes and radio buttons are terracotta, and a focus ring shows for the
+     keyboard only. A text field marks its focus with its border, because a
+     browser counts every click into one as :focus-visible. */
+  input[type="checkbox"], input[type="radio"]{ accent-color: #F4845F; }
+  :focus:not(:focus-visible){ outline: none; }
+  :focus-visible{ outline: 2px solid #F4845F; outline-offset: 2px; }
+  [tabindex="-1"]:focus-visible{ outline: none; }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([readonly]):focus,
+  textarea:not([readonly]):focus{ outline: none; border-color: #F4845F; }
   </style>
 </head>
 <body>
