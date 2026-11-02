@@ -531,6 +531,11 @@ document.querySelector(".nav").addEventListener("click", (e) => {
   const el = e.target.closest("a, button");
   if (el && e.detail > 0) el.blur();
 });
+// Focus rings anywhere are for moving around with the keyboard: Tab or an
+// arrow key turns them on, a click or tap turns them off.
+const FOCUS_KEYS = ["Tab", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"];
+document.addEventListener("keydown", (e) => { if (FOCUS_KEYS.includes(e.key)) document.documentElement.setAttribute("data-keys", ""); }, true);
+document.addEventListener("pointerdown", () => document.documentElement.removeAttribute("data-keys"), true);
 
 // ─── Calendar ────────────────────────────────────────────────────────────────
 // A two-month range picker with pick-up and return times. trip is changed in

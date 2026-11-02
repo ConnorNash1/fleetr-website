@@ -76,7 +76,6 @@
   button { cursor: pointer; background: none; border: none; }
   img { display: block; max-width: 100%; }
   ::selection { background: var(--rule); }
-  :focus-visible { outline: 2px solid var(--terra); outline-offset: 2px; border-radius: 4px; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   .wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 20px; }
@@ -727,7 +726,6 @@
   .sc-check { stroke-width: 2.2; }
   .reel-card.on .sc-body, .reel-panel-icon .sc-body { fill: var(--ink); }
   .reel-card.on .sc-check, .reel-panel-icon .sc-check { stroke: var(--terra); }
-  .reel-card:focus-visible { outline: 2px solid var(--terra); outline-offset: 2px; }
   .reel-panel { min-height: 250px; }
   .reel-panel.swap > * { animation: reel-in .5s cubic-bezier(.22, 1, .36, 1) backwards; }
   .reel-panel.swap > :nth-child(2) { animation-delay: .04s; }
@@ -1008,13 +1006,27 @@
   .footer small { grid-column: 1 / -1; padding-top: 22px; border-top: 1px solid var(--rule); color: var(--ink-55); font-size: 14px; }
 
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation-duration: .01ms !important; } }
-  /* Checkboxes and radio buttons are terracotta, and a focus ring shows for the
-     keyboard only. A text field marks its focus with its border, because a
-     browser counts every click into one as :focus-visible. */
+  /* Checkboxes and radio buttons are terracotta. A focus ring shows only on a
+     button, a link or a field, never on a card or anything else that holds
+     more, and only while the keyboard is moving around the page
+     (html[data-keys], set by Tab or an arrow key and cleared by a click or
+     tap). Cmd, Shift or Return alone never brings one back. A text field
+     marks its focus with its border, because a browser counts every click
+     into one as :focus-visible. */
   input[type="checkbox"], input[type="radio"]{ accent-color: #F4845F; }
   :focus:not(:focus-visible){ outline: none; }
-  :focus-visible{ outline: 2px solid #F4845F; outline-offset: 2px; }
+  :focus-visible{ outline: none; }
+  html[data-keys] :is(button, a[href], input, select, textarea):focus-visible{ outline: 2px solid #F4845F; outline-offset: 2px; }
+  html[data-keys] :is(.card, .reel-card, .class-row, .seg, .search-summary):focus-visible{ outline: none; }
+  html:not([data-keys]) :focus-visible{ outline: none !important; }
   [tabindex="-1"]:focus-visible{ outline: none; }
+  /* An autofilled field keeps our white and our text colour, not the
+     browser's light blue. */
+  input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill{
+    -webkit-box-shadow: 0 0 0 1000px #F9F9F7 inset; box-shadow: 0 0 0 1000px #F9F9F7 inset;
+    -webkit-text-fill-color: #1F1E1D; caret-color: #1F1E1D;
+  }
+  input:autofill, textarea:autofill, select:autofill{ box-shadow: 0 0 0 1000px #F9F9F7 inset; color: #1F1E1D; }
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([readonly]):focus,
   textarea:not([readonly]):focus{ outline: none; border-color: #F4845F; }
   </style>
