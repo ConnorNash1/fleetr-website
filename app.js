@@ -318,7 +318,14 @@ function quoteLines(q) {
 const cityOf = (b) => (b.citiesServed && b.citiesServed[0]) || (b.airportCodes && b.airportCodes[0]) || "";
 function perksOf(b) {
   const out = [];
-  if (b.airportPickup) out.push({ icon: "lPlane", name: "Airport pickup", text: b.airportCodes && b.airportCodes.length ? `At ${b.airportCodes.join(", ")}` : "Pick up at the airport" });
+  // A free ride from the airport: the branch picks the renter up, or covers
+  // their taxi or Uber to it. "Free airport ride: we pick you up at YYT".
+  if (b.airportPickup) {
+    const codes = (b.airportCodes || []).join(", ");
+    out.push({ icon: "lPlane", name: "Free airport ride", text: b.airportRideType === "taxi"
+      ? `We cover your taxi or Uber to us${codes ? ` from ${codes}` : ""}`
+      : `We pick you up${codes ? ` at ${codes}` : ""}` });
+  }
   if (b.delivery) out.push({ icon: "lTruck", name: "Delivery", text: "Get the vehicle brought to you" });
   if (b.afterHoursDropoff) out.push({ icon: "lMoon", name: "Return anytime with the key drop", text: "Outside opening hours" });
   return out;
