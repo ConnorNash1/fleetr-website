@@ -320,7 +320,6 @@ function perksOf(b) {
   const out = [];
   if (b.airportPickup) out.push({ icon: "lPlane", name: "Airport pickup", text: b.airportCodes && b.airportCodes.length ? `At ${b.airportCodes.join(", ")}` : "Pick up at the airport" });
   if (b.delivery) out.push({ icon: "lTruck", name: "Delivery", text: "Get the vehicle brought to you" });
-  if (b.lockboxPickup) out.push({ icon: "lKey", name: "Pick up anytime from the lockbox", text: "Outside opening hours" });
   if (b.afterHoursDropoff) out.push({ icon: "lMoon", name: "Return anytime with the key drop", text: "Outside opening hours" });
   return out;
 }
