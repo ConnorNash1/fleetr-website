@@ -926,6 +926,9 @@ const classIcon = (c) => (c.electric ? "Electric" : c.luxury ? "Luxury" : c.cate
 const orList = (words) => (words.length < 2 ? words.join("") : `${words.slice(0, -1).join(", ")} or ${words[words.length - 1]}`);
 const placeName = (s) => (/^[a-z]{3,4}$/i.test(s.trim()) ? s.trim().toUpperCase() : s.trim());
 
+// The Type option to open the Type menu on again, when a pick in it has just
+// searched again and drawn the results page afresh.
+let typeMenuReopen = null;
 function SearchPage(q) {
   const where = (q.get("where") || "").trim();
   const point = pointFrom(q);
@@ -944,19 +947,58 @@ function SearchPage(q) {
   const layout = h("div", { class: "results" }, listEl, mapCol);
   const toggle = h("button", { type: "button", class: "map-toggle", style: { display: "none" } });
 
-  const sortSel = h("select", { class: "select", "aria-label": "Sort", onchange: (e) => { sort = e.target.value; go("/search", params()); } },
-    [["recommended", "Recommended"], ["price_asc", "Price, low to high"], ["price_desc", "Price, high to low"]]
-      .map(([v, l]) => h("option", { value: v, selected: sort === v ? "selected" : null }, l)));
-  const chips = h("div", { class: "filters", role: "group", "aria-label": "Vehicle type" },
-    h("button", { type: "button", class: `chip plain${!cats.length ? " active" : ""}`, "aria-pressed": cats.length ? "false" : "true",
-      onclick: () => go("/search", params({ cat: null })) }, "All types"),
-    // Each type toggles on its own, so several can be on at once.
-    CATEGORIES.map((c) => {
-      const on = cats.includes(c);
-      return h("button", { type: "button", class: `chip${on ? " active" : ""}`, "aria-pressed": on ? "true" : "false",
-        onclick: () => go("/search", params({ cat: CATEGORIES.filter((x) => (x === c ? !on : cats.includes(x))).join(",") || null })) }, icon(c, "1.6"), c);
-    }),
-    h("label", { class: "sort" }, "Sort", sortSel));
+  // Two dropdowns side by side: Type, which takes several picks, and Sort.
+  // Each choice searches again straight away. The page is drawn afresh by
+  // that search, so the Type menu is opened again where it was, on the same
+  // option, and several types can be ticked in a row.
+  const SORTS = [["recommended", "Recommended"], ["price_asc", "Price low to high"], ["price_desc", "Price high to low"]];
+  const sortSel = h("select", { class: "dd-native", "aria-label": "Sort", onchange: (e) => { sort = e.target.value; go("/search", params()); } },
+    SORTS.map(([v, l]) => h("option", { value: v, selected: sort === v ? "selected" : null }, l)));
+  const sortBox = h("div", { class: "dd-field" },
+    h("span", { class: "dd-label", "aria-hidden": "true" }, "Sort"),
+    h("div", { class: "dd" },
+      h("span", { class: "dd-value" }, (SORTS.find(([v]) => v === sort) || SORTS[0])[1]),
+      sortSel));
+
+  const typeMenu = h("div", { class: "dd-menu", role: "group", "aria-label": "Type", hidden: true });
+  const typeBtn = h("button", { type: "button", class: "dd", "aria-haspopup": "true", "aria-expanded": "false", "aria-label": `Type: ${cats.length ? cats.join(", ") : "All types"}` },
+    h("span", { class: "dd-value" }, cats.length ? cats.join(", ") : "All types"));
+  const openType = (on) => {
+    typeMenu.hidden = !on;
+    typeBtn.setAttribute("aria-expanded", on ? "true" : "false");
+  };
+  // All types clears the other picks; any other type unticks All types; with
+  // nothing picked it is All types again.
+  const pickType = (c, input) => {
+    const next = c === null ? [] : CATEGORIES.filter((x) => (x === c ? !cats.includes(c) : cats.includes(x)));
+    if (c === null && !cats.length) { input.checked = true; return; }
+    typeMenuReopen = c === null ? "all" : c;
+    go("/search", params({ cat: next.join(",") || null }));
+  };
+  const typeOption = (c, label, on) => {
+    const input = h("input", { type: "checkbox", checked: on, "data-type": c === null ? "all" : c });
+    input.addEventListener("change", () => pickType(c, input));
+    return h("label", { class: "dd-opt" }, input, c ? icon(c, "1.6") : null, h("span", null, label));
+  };
+  set(typeMenu, typeOption(null, "All types", !cats.length), CATEGORIES.map((c) => typeOption(c, c, cats.includes(c))));
+  typeBtn.addEventListener("click", (e) => { e.stopPropagation(); openType(typeMenu.hidden); });
+  typeMenu.addEventListener("click", (e) => e.stopPropagation());
+  const typeWrap = h("div", { class: "dd-field" },
+    h("span", { class: "dd-label", "aria-hidden": "true" }, "Type"),
+    h("div", { class: "dd-wrap" }, typeBtn, typeMenu));
+  const closeOnOutside = () => openType(false);
+  const closeOnEscape = (e) => { if (e.key === "Escape" && !typeMenu.hidden) { openType(false); typeBtn.focus(); } };
+  document.addEventListener("click", closeOnOutside);
+  document.addEventListener("keydown", closeOnEscape);
+  onCleanup(() => { document.removeEventListener("click", closeOnOutside); document.removeEventListener("keydown", closeOnEscape); });
+  if (typeMenuReopen) {
+    const focusOn = typeMenuReopen;
+    typeMenuReopen = null;
+    openType(true);
+    setTimeout(() => { const el = typeMenu.querySelector(`input[data-type="${focusOn}"]`); if (el) el.focus({ preventScroll: true }); }, 0);
+  }
+
+  const chips = h("div", { class: "filters" }, typeWrap, sortBox);
 
   const page = h("div", null,
     h("div", { class: "results-top" }, h("div", { class: "wrap" }, pill, chips)),
