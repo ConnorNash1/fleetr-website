@@ -2126,22 +2126,37 @@ function DealershipsPage() {
 // into view. Inside, a mock of the real check-in plays one screen at a time
 // once the phone is on screen.
 function checkinWalkthrough() {
+  // The pickup as the check-in app (customer/index.html in fleetr-customer)
+  // runs it, in its PICKUP_SCREENS order, with its own headings, buttons and
+  // lines. Your insurance is left out: it shows only when a company requires
+  // renters' own insurance, in place of Protection.
   const SCREENS = 9;
   const el = (cls, ...kids) => h("div", { class: cls }, ...kids);
   const field = (label, value) => [h("span", { class: "ca-label" }, label), el("ca-input", value)];
   const btn = (text, cls = "ca-btn-primary") => el("ca-btn " + cls, text);
-  // A choice as the app draws it: a card with a radio mark, terracotta when picked.
-  const radio = (text, on) => el("ca-btn ca-radio" + (on ? " on" : ""), text);
   // The thin bar across the top: this screen's step fills in on arrival.
   const progress = (n) => h("div", { class: "ca-progress", style: `--from: ${((n - 1) / SCREENS) * 100}%; --to: ${(n / SCREENS) * 100}%` }, h("i"));
   const top = (n) => [progress(n), el("ca-back", "Back")];
   const row = (label, value) => el("ca-row", h("span", null, label), h("b", null, value));
-  const choice = (name, price, wording, picked) => el("ca-card",
-    el("ca-card-head", h("b", null, name), h("span", null, price)),
+  // A card as the app draws it: a name, then label and value rows.
+  const pcard = (title, rows) => el("ca-pcard", el("ca-pcard-name", title),
+    ...rows.map(([label, value]) => el("ca-prow", h("span", null, label), h("span", { class: "ca-pvalue" }, value))));
+  // A protection product: name and price, the wording, then Accept and
+  // Decline, outlined, the one picked ringed in terracotta.
+  const choice = (name, price, wording, picked) => el("ca-pcard",
+    el("ca-pcard-head", h("b", null, name), h("span", null, price)),
     wording && h("p", null, wording),
-    el("ca-choices", radio("Accept", picked === 0), radio("Decline", picked === 1)));
+    el("ca-choices", el("ca-btn ca-choice" + (picked === 0 ? " on" : ""), "Accept"), el("ca-btn ca-choice" + (picked === 1 ? " on" : ""), "Decline")));
   // A car as the app lists it; the tapped one goes straight on.
   const car = (name, meta, tap) => el("ca-car" + (tap ? " ca-tap" : ""), h("b", null, name), h("span", null, meta));
+  // The charges, worked out as the app works them out: the days at the daily
+  // rate, the protection accepted, each tax on the subtotal, to the cent.
+  const money = (n) => `$${n.toFixed(2)}`;
+  const DAYS = 3, RATE = 89, CDW = 29.99;
+  const rental = RATE * DAYS, cover = CDW * DAYS, subtotal = rental + cover;
+  const hst = Math.round(subtotal * 15) / 100;
+  const cgroup = (rows, heading) => el("ca-cgroup", heading && el("ca-cgroup-head", heading),
+    ...rows.map(([label, value, bold]) => el("ca-crow" + (bold ? " ca-crow-total" : ""), h("span", null, label), h("span", null, value))));
 
   const screens = [
     ["Open the texted link", el("ca-screen",
@@ -2150,35 +2165,28 @@ function checkinWalkthrough() {
       ...field("Reservation code", "KQT 482 913"),
       ...field("Last name", "Smith"),
       el("ca-spacer"),
+      h("p", { class: "ca-consent" }, "By continuing, you agree to fleetr's ", h("span", null, "Terms of Use"), " and ", h("span", null, "Privacy Policy"), "."),
       btn("Start check-in"),
       el("ca-links", h("span", null, "Change pickup time"), h("span", null, "Cancel booking")))],
-    ["Scan the license", el("ca-screen ca-camera",
-      progress(2),
-      el("ca-frame",
-        el("ca-licence", el("ca-lic-photo"), el("ca-lic-lines", h("span"), h("span"), h("span"), h("span"))),
-        h("span", { class: "ca-scanline" })),
-      el("ca-camera-text", "Scanning license"))],
+    ["Scan the license", el("ca-screen",
+      ...top(2),
+      h("h4", null, "Scan license"),
+      btn("Scan license"),
+      el("ca-manual", "Enter details manually"))],
     ["Add drivers", el("ca-screen",
       ...top(3),
       h("h4", null, "Additional drivers"),
       btn("Add a driver", "ca-btn-line"),
       el("ca-spacer"),
       btn("Continue"))],
-    ["Choose coverages", el("ca-screen",
-      ...top(4),
-      h("h4", null, "Protection"),
-      choice("Collision damage waiver", "$29.99 per day", "You pay $0 for damage.", 0),
-      choice("Supplemental liability", "$16.99 per day", null, 1),
-      el("ca-spacer"),
-      btn("Continue"))],
     ["Pick the car", el("ca-screen",
-      ...top(5),
+      ...top(4),
       h("h4", null, "Choose your car"),
       car("2024 Toyota Corolla", "White · ABC123", true),
       car("2023 Honda Civic", "Blue · KLM456"),
       el("ca-manual", "Enter plate instead"))],
     ["Check the damage on file", el("ca-screen",
-      ...top(6),
+      ...top(5),
       h("h4", null, "Pre-existing damage"),
       el("ca-vehicle", el("ca-plate", "ABC123"), el("ca-vdetail", "2024 Toyota Corolla · Small car")),
       el("ca-info", "The following damage has been documented on this vehicle.", h("br"), "You are not responsible for it."),
@@ -2187,36 +2195,60 @@ function checkinWalkthrough() {
       el("ca-spacer"),
       btn("I understand, continue"))],
     ["Photograph anything new", el("ca-screen",
-      ...top(7),
+      ...top(6),
       h("h4", null, "Inspection photos"),
       el("ca-optional", "Optional"),
-      el("ca-photo", el("ca-photo-img"), el("ca-photo-text", h("b", null, "Photo 1"), h("span", null, "Driver door"))),
-      btn("Add photos", "ca-btn-line"),
+      el("ca-dsection",
+        el("ca-dsection-head", h("b", null, "Existing damage"), h("span", { class: "ca-dsection-count" }, "1"), h("span", { class: "ca-dsection-chev", "aria-hidden": "true" }, "▾")),
+        el("ca-dsection-grid",
+          el("ca-dsection-item", el("ca-dsection-thumb"), h("span", null, "Driver door scratch")),
+          el("ca-dsection-add", "+ Add photo"))),
       el("ca-spacer"),
       btn("Continue"))],
-    ["Sign the agreement", el("ca-screen",
-      ...top(8),
-      h("h4", null, "Review and sign"),
-      el("ca-summary", row("Vehicle", "Toyota Corolla"), row("Out", "October 8, 2026"), row("Due", "October 11, 2026"), row("Daily rate", "$89.00")),
-      el("ca-card ca-fold", h("b", null, "Rental agreement")),
-      (() => {
-        const t = document.createElement("template");
-        t.innerHTML = '<svg class="ca-sig" viewBox="0 0 300 110" aria-hidden="true"><path d="M22 74c14-30 26-46 32-40 7 8-14 42-6 44 9 3 18-34 28-32 8 2-2 28 6 29 10 1 14-22 24-21 9 1 2 21 12 21 12 0 20-30 31-28 8 2-3 26 6 27 14 2 30-22 44-18 9 3 4 14 14 14 18 0 40-12 62-16"/></svg>';
-        return el("ca-sig-wrap", t.content.firstChild, h("span", { class: "ca-sig-clear", "aria-hidden": "true" }));
-      })(),
+    ["Choose coverages", el("ca-screen",
+      ...top(7),
+      h("h4", null, "Protection"),
+      choice("Collision damage waiver", "$29.99 per day", "You pay $0 for damage.", 0),
+      choice("Supplemental liability", "$16.99 per day", null, 1),
       el("ca-spacer"),
-      btn("Confirm"))],
+      btn("Continue"))],
+    // Taller than the phone, as in the app: it scrolls through to Confirm.
+    ["Sign the agreement", el("ca-screen ca-long",
+      progress(8),
+      el("ca-scrollbox", el("ca-scroll",
+        el("ca-back", "Back"),
+        h("h4", null, "Review and sign"),
+        pcard("Main driver", [["Name", "Jordan Smith"], ["License", "S12345678, NL"], ["Expires", "March 14, 2029"]]),
+        pcard("Vehicle", [["Make and model", "Toyota Corolla"], ["Plate", "ABC123"], ["Plate province or state", "NL"], ["Odometer", "41,250 km"], ["Fuel level", "Full"]]),
+        pcard("Rental", [["Out", "October 8, 2026"], ["Due", "October 11, 2026"], ["Daily rate", money(RATE)]]),
+        pcard("Coverages", [["Collision damage waiver", "$29.99 per day"], ["Supplemental liability", "Declined"]]),
+        pcard("What you pay for damage", [["Collision damage waiver", "You pay $0 for damage."]]),
+        el("ca-pcard",
+          el("ca-pcard-name", "Charges"),
+          cgroup([[`${DAYS} days × $${RATE}`, money(rental)]]),
+          cgroup([[`Collision damage waiver (${DAYS} days × ${money(CDW)})`, money(cover)]], "Additional charges"),
+          cgroup([["Subtotal", money(subtotal)], ["HST 15%", money(hst)]]),
+          cgroup([["Total", money(subtotal + hst), true]])),
+        el("ca-pcard ca-fold", h("b", null, "Rental agreement")),
+        (() => {
+          const t = document.createElement("template");
+          t.innerHTML = '<svg class="ca-sig" viewBox="0 0 300 110" aria-hidden="true"><path d="M22 74c14-30 26-46 32-40 7 8-14 42-6 44 9 3 18-34 28-32 8 2-2 28 6 29 10 1 14-22 24-21 9 1 2 21 12 21 12 0 20-30 31-28 8 2-3 26 6 27 14 2 30-22 44-18 9 3 4 14 14 14 18 0 40-12 62-16"/></svg>';
+          return el("ca-sig-wrap", h("span", { class: "ca-sig-hint" }, "Sign with your finger or stylus"), t.content.firstChild, h("span", { class: "ca-sig-clear", "aria-hidden": "true" }));
+        })(),
+        btn("Confirm"))))],
     ["Ready to go", el("ca-screen ca-done",
       progress(9),
       el("ca-spacer"),
       doneTick(),
       h("h4", null, "You're good to go"),
-      el("ca-summary ca-ticket", row("Vehicle", "Toyota Corolla"), row("Plate", "ABC123"), row("Pickup", "October 8, 2026, 9:12 AM"), row("Status", "Inspection complete")),
+      el("ca-summary ca-ticket", row("Vehicle", "Toyota Corolla"), row("Plate", "ABC123"), row("Pickup", "October 8, 2026, 9:12 AM"),
+        row("Odometer", "41,250 km"), row("Fuel", "Full"), row("Coverages", "Collision damage waiver"), row("Status", "Inspection complete")),
       el("ca-spacer"),
       btn("Done"))],
   ];
-  // How long each screen stays up before its button is tapped.
-  const holds = [2600, 2400, 2200, 2600, 2200, 2600, 2400, 3200, 3200];
+  // How long each screen stays up before its button is tapped. Review and
+  // sign has time to scroll through to Confirm.
+  const holds = [2600, 2000, 2200, 2200, 2600, 2400, 2600, 7200, 3200];
 
   const track = el("ca-track", ...screens.map(([, s]) => s));
   const caption = h("p", { class: "cs-caption", "aria-live": "polite" });
@@ -2236,6 +2268,10 @@ function checkinWalkthrough() {
     track.querySelectorAll(".tap").forEach((b) => b.classList.remove("tap"));
     dots.forEach((d, j) => d.setAttribute("aria-current", j === idx ? "step" : "false"));
     caption.textContent = `${idx + 1}. ${screens[idx][0]}`;
+    // A screen taller than the phone scrolls to its end: how far, measured
+    // unscaled, as the app's page would scroll.
+    const box = screens[idx][1].querySelector(".ca-scrollbox");
+    if (box) box.style.setProperty("--scroll", `${-Math.max(0, box.firstChild.offsetHeight - box.clientHeight)}px`);
   }
   const auto = motionOK.matches;
   function restart() {

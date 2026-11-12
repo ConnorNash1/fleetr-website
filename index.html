@@ -912,11 +912,7 @@
   @keyframes ca-clear-in { to { opacity: 1; } }
   .ca h4 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; text-align: center; margin-bottom: 24px; }
   .ca-optional { text-align: center; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-55); margin-bottom: 14px; }
-  .ca-card, .ca-vehicle, .ca-info, .ca-damage { background: var(--ink-06); border: 1px solid var(--rule); border-radius: 14px; }
-  .ca-card { padding: 16px 18px 4px; margin-bottom: 12px; }
-  .ca-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
-  .ca-card-head span { font-size: 14px; color: var(--ink-70); white-space: nowrap; }
-  .ca-card p { font-size: 14px; color: var(--ink-70); line-height: 1.5; margin-bottom: 12px; }
+  .ca-vehicle, .ca-info, .ca-damage { background: var(--ink-06); border: 1px solid var(--rule); border-radius: 14px; }
   .ca-choices { display: flex; gap: 10px; }
   .ca-choices .ca-btn { flex: 1; padding: 12px 14px; font-size: 15px; }
   .ca-vehicle { padding: 18px 20px; margin-bottom: 20px; }
@@ -925,10 +921,44 @@
   .ca-info { padding: 14px 16px; font-size: 14.5px; color: var(--ink-70); line-height: 1.55; margin-bottom: 20px; }
   .ca-damage { display: flex; gap: 12px; padding: 13px 16px; margin-bottom: 8px; font-size: 15px; border-radius: 12px; }
   .ca-damage::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); flex: none; margin-top: 7px; }
-  .ca-photo { display: flex; gap: 14px; align-items: center; padding: 10px; border: 1px solid var(--rule); border-radius: 14px; margin-bottom: 14px; }
-  .ca-photo-img { width: 84px; height: 64px; border-radius: 10px; background: linear-gradient(160deg, var(--rule-2), var(--ink-55)); }
-  .ca-photo-text { display: grid; gap: 2px; font-size: 15px; }
-  .ca-photo-text span { color: var(--ink-70); font-size: 14px; }
+  /* Inspection photos: the app's Existing damage section, opened. */
+  .ca-dsection { border: 1px solid rgba(31, 30, 29, .12); border-radius: 12px; background: #FFFFFF; margin-bottom: 20px; }
+  .ca-dsection-head { display: flex; align-items: center; gap: 8px; padding: 14px 16px; font-size: 16px; }
+  .ca-dsection-count { min-width: 22px; padding: 1px 8px; border-radius: 999px; background: rgba(31, 30, 29, .12); font-size: 12.5px; font-weight: 600; text-align: center; }
+  .ca-dsection-chev { margin-left: auto; color: var(--ink-55); }
+  .ca-dsection-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 16px 16px; }
+  .ca-dsection-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 12.5px; overflow-wrap: anywhere; }
+  .ca-dsection-thumb, .ca-dsection-add { aspect-ratio: 1; width: 100%; border-radius: 10px; }
+  .ca-dsection-thumb { border: 1px solid rgba(31, 30, 29, .12); background: linear-gradient(160deg, var(--rule-2), var(--ink-55)); }
+  .ca-dsection-add { display: grid; place-items: center; border: 1px dashed var(--ink-55); background: var(--paper); font-size: 13.5px; font-weight: 600; color: #C9603D; }
+  /* Protection, and the cards on Review and sign, as the app draws them. */
+  .ca-pcard { background: #FFFFFF; border: 1px solid rgba(31, 30, 29, .12); border-radius: 14px; box-shadow: 0 1px 2px rgba(31, 30, 29, .05); padding: 16px 18px; margin-bottom: 12px; }
+  .ca-pcard-name { font-weight: 600; font-size: 16px; margin-bottom: 6px; }
+  .ca-pcard-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; font-size: 16px; }
+  .ca-pcard-head span { font-size: 14.4px; color: var(--ink-70); white-space: nowrap; }
+  .ca-pcard p { font-size: 14.4px; color: var(--ink-70); line-height: 1.55; margin: 0 0 12px; }
+  .ca-prow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px; }
+  .ca-pvalue { font-size: 14.4px; color: var(--ink-70); text-align: right; }
+  .ca-choice { flex: 1; margin: 0; padding: 12px 14px; font-size: 15px; background: transparent; border-color: var(--ink); }
+  .ca-choice.on { border-color: var(--terra); box-shadow: 0 0 0 3px rgba(244, 132, 95, .14); }
+  .ca-cgroup { border-top: 1px solid rgba(31, 30, 29, .12); margin-top: 14px; padding-top: 14px; }
+  .ca-cgroup-head { font-weight: 600; font-size: 15px; margin-bottom: 10px; }
+  .ca-crow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px; }
+  .ca-crow + .ca-crow { margin-top: 10px; }
+  .ca-crow span:last-child { font-size: 14.4px; color: var(--ink-70); white-space: nowrap; }
+  .ca-crow-total span, .ca-crow-total span:last-child { font-weight: 600; font-size: 16px; color: var(--ink); }
+  .ca-consent { font-size: 13px; color: var(--ink-55); text-align: center; line-height: 1.45; margin: 0 0 12px; }
+  .ca-consent span { color: #F4845F; }
+  /* Review and sign scrolls through to Confirm, as the app's page does. */
+  .ca-scrollbox { flex: 1 1 auto; min-height: 0; overflow: hidden; margin: 0 -24px; padding: 0 24px; }
+  .ca-screen.on .ca-scroll { animation: ca-scroll 4s .6s ease-in-out forwards; }
+  @keyframes ca-scroll { to { transform: translateY(var(--scroll, 0)); } }
+  .ca-long .ca-sig-wrap { margin-bottom: 20px; }
+  .ca-sig-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-55); font-size: 14.4px; }
+  .ca-screen.on .ca-sig-hint { animation: ca-hint-out .2s 4.5s forwards; }
+  @keyframes ca-hint-out { to { opacity: 0; } }
+  .ca-long.on .ca-sig path { animation-delay: 4.6s; }
+  .ca-long.on .ca-sig-clear { animation-delay: 6.3s; }
   .ca-summary { background: var(--paper); border: 1px solid var(--rule); border-radius: 18px; box-shadow: var(--shadow); padding: 4px 18px; margin-bottom: 18px; }
   .ca-row { display: flex; justify-content: space-between; gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--rule); font-size: 14.5px; }
   .ca-row:last-child { border-bottom: none; }
@@ -941,36 +971,17 @@
   .ca-done { text-align: center; }
   .ca-done .done-tick { width: 64px; height: 64px; margin: 0 auto 18px; }
   .ca-screen:not(.on) .done-tick * { animation: none; }
-  .ca-camera { background: var(--ink); padding: 0; justify-content: center; align-items: center; gap: 34px; }
-  .ca-frame { position: relative; width: 300px; height: 196px; border-radius: 18px; box-shadow: 0 0 0 2px var(--paper), 0 0 0 999px rgba(31, 30, 29, .55); overflow: hidden; background: var(--ink-70); }
-  .ca-licence { position: absolute; inset: 22px 20px; border-radius: 10px; background: var(--ink-06); display: flex; gap: 14px; padding: 16px; }
-  .ca-lic-photo { width: 70px; border-radius: 6px; background: var(--rule-2); }
-  .ca-lic-lines { flex: 1; display: grid; align-content: start; gap: 10px; padding-top: 4px; }
-  .ca-lic-lines span { height: 9px; border-radius: 5px; background: var(--rule-2); }
-  .ca-lic-lines span:nth-child(1) { width: 80%; background: var(--ink-55); }
-  .ca-lic-lines span:nth-child(3) { width: 60%; }
-  .ca-lic-lines span:nth-child(4) { width: 70%; }
-  .ca-scanline { position: absolute; left: 0; right: 0; top: 8%; height: 2px; background: var(--terra); box-shadow: 0 0 14px 2px rgba(244, 132, 95, .7); }
-  .ca-screen.on .ca-scanline { animation: scan 1.2s ease-in-out infinite alternate; }
-  @keyframes scan { to { top: 90%; } }
-  .ca-camera-text { color: var(--paper); font-size: 16px; font-weight: 600; }
-  @media (prefers-reduced-motion: reduce) { .ca-track { transition: none; } .ca-sig path { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) { .ca-track { transition: none; } .ca-sig path { stroke-dashoffset: 0; } .ca-sig-hint { opacity: 0; } }
 
   /* The mock app in the terracotta theme the app now uses: white cards and
-     fields, terracotta accents, choices as radio cards and the summary as a
-     ticket. */
+     fields, terracotta accents, and the summary as a ticket. */
   .ca-input { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); }
-  .ca-card, .ca-vehicle, .ca-info, .ca-damage { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); box-shadow: 0 1px 2px rgba(31, 30, 29, .05); }
+  .ca-vehicle, .ca-info, .ca-damage { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); box-shadow: 0 1px 2px rgba(31, 30, 29, .05); }
   .ca-info { box-shadow: inset 3px 0 0 var(--terra), 0 1px 2px rgba(31, 30, 29, .05); }
   .ca-damage::before { background: var(--terra); }
-  .ca-photo { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); }
   .ca-back, .ca-manual { color: #C9603D; }
   .ca-manual { text-decoration-color: var(--terra); }
   .ca-btn-primary.tap { background: #EE7550; }
-  .ca-radio { display: flex; align-items: center; justify-content: center; gap: 10px; background: #FFFFFF; border: 1.5px solid rgba(31, 30, 29, .12); }
-  .ca-radio::before { content: ""; flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(31, 30, 29, .3); background: #FFFFFF; }
-  .ca-radio.on { border-color: var(--terra); background: rgba(244, 132, 95, .14); }
-  .ca-radio.on::before { border-color: var(--terra); background: radial-gradient(circle, var(--terra) 0 4px, #FFFFFF 4.5px); }
   .ca-summary { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); }
   .ca-ticket {
     --notch: 44px; box-shadow: none; padding-top: 0;
@@ -1102,6 +1113,6 @@
     </div>
   </footer>
 
-  <script type="module" src="app.js?v=20261112"></script>
+  <script type="module" src="app.js?v=20261113"></script>
 </body>
 </html>
