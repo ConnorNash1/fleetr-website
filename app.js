@@ -272,7 +272,9 @@ const branchPerDay = (b) => perDayText(b.total, b.days, Math.round(Number(b.lowe
 const branchDayPrice = (b) => Number(b.total) / Math.max(1, Number(b.days) || 1);
 
 // The price breakdown. Tax applies to every charge, as it will on the rental
-// agreement. coverages: the ones accepted, each with pricePerDay.
+// agreement: each tax once, on the subtotal, to the cent, as the staff app's
+// Close Rental works out final charges (chargeTotals in fleetr-internal).
+// coverages: the ones accepted, each with pricePerDay.
 function quote(cls, days, coverages, taxes) {
   const lines = rentalLines(cls, days);
   const rentalCount = lines.length;
@@ -282,8 +284,8 @@ function quote(cls, days, coverages, taxes) {
   });
   const subtotal = round2(lines.reduce((s, l) => s + l.amount, 0));
   const taxLines = (Array.isArray(taxes) ? taxes : [])
-    .filter((t) => t && Number(t.rate) > 0)
-    .map((t) => ({ label: `${t.name} (${Number(t.rate)}%)`, amount: round2(subtotal * Number(t.rate) / 100) }));
+    .filter((t) => t && String(t.name ?? "").trim() !== "" && Number(t.rate) > 0).slice(0, 2)
+    .map((t) => ({ label: `${t.name} (${Number(t.rate)}%)`, amount: Math.round(subtotal * Number(t.rate)) / 100 }));
   const total = round2(subtotal + taxLines.reduce((s, l) => s + l.amount, 0));
   // Against every non-season day at the normal daily rate, from the database.
   const savings = round2(Number(cls.price && cls.price.savings) || 0);
