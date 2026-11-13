@@ -1,0 +1,47 @@
+# Deploys fleetr.ai to GitHub Pages on every push to main.
+#
+# Before publishing, the ?v= value on the app.js link in index.html is set to
+# this commit, so every deploy loads its own app.js instead of mixing a cached
+# one with the new page. Nobody sets it by hand.
+#
+# Needs the repository's Pages source set to "GitHub Actions"
+# (Settings > Pages > Build and deployment > Source).
+name: Deploy fleetr.ai
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set the app.js version to this commit
+        run: |
+          v="$(printf '%s' "$GITHUB_SHA" | cut -c1-7)"
+          V="$v" perl -pi -e 's/src="app\.js(\?v=[^"]*)?"/src="app.js?v=$ENV{V}"/g' index.html
+          grep -q "src=\"app.js?v=${v}\"" index.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
