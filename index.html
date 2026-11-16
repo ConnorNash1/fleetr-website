@@ -1068,7 +1068,18 @@
   input:autofill, textarea:autofill, select:autofill{ box-shadow: 0 0 0 1000px #F9F9F7 inset; color: #1F1E1D; }
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([readonly]):focus,
   textarea:not([readonly]):focus{ outline: none; border-color: #F4845F; }
-  </style>
+  
+  /* Phones and touch screens: every control is at least 44px to tap
+     (TESTING.md's Fitts standard), with the same look. Measured on staging
+     at 375px: the class chips were 38px, the menu button 40px and the
+     check-in walkthrough's dots 26px. Nine dots fit a phone at 36px wide. */
+  @media (max-width: 767px), (pointer: coarse) {
+    .cat, .nav-menu-btn, .nav-links a, .nav-login, .nav-links a.nav-login { min-height: 44px; }
+    .nav-links a { display: inline-flex; align-items: center; }
+    .cs-dots { gap: 2px; }
+    .cs-dot { width: 36px; height: 44px; }
+  }
+</style>
 </head>
 <body>
   <header class="nav">
