@@ -155,10 +155,10 @@ async function worker(path, body) {
 const REASONS = {
   bad_query:            "Enter a city or airport code.",
   bad_category:         "Choose a vehicle type.",
-  bad_dates:            "Choose a return time after the pick-up.",
-  too_soon:             "That pick-up is too soon. Choose a later time.",
+  bad_dates:            "Choose a return time after the pickup.",
+  too_soon:             "That pickup is too soon. Choose a later time.",
   too_long:             "That rental is longer than this branch allows. Choose an earlier return.",
-  pickup_outside_hours: "The branch is closed at that pick-up time. Check the hours and choose another time.",
+  pickup_outside_hours: "The branch is closed at that pickup time. Check the hours and choose another time.",
   return_outside_hours: "The branch is closed at that return time. Check the hours and choose another time.",
   no_availability:      "Nothing is available for these dates.",
   not_found:            "This branch isn't taking bookings on fleetr.ai right now.",
@@ -609,11 +609,11 @@ function Calendar({ trip, focus, onChange, onDone }) {
       h("div", { class: "cal-head" },
         h("button", { type: "button", class: "cal-nav", "aria-label": "Previous month", disabled: atStart,
           onclick: () => { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); draw(); } }, icon("left", "2")),
-        h("span", { class: "cal-hint" }, picking === "start" ? "Choose your pick-up date" : "Choose your return date"),
+        h("span", { class: "cal-hint" }, picking === "start" ? "Choose your pickup date" : "Choose your return date"),
         h("button", { type: "button", class: "cal-nav", "aria-label": "Next month",
           onclick: () => { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); draw(); } }, icon("right", "2"))),
       h("div", { class: "cal-months" }, month(view), wide && month(second)),
-      h("div", { class: "cal-times" }, timeSelect("Pick-up time", "puTime"), timeSelect("Return time", "rtTime")),
+      h("div", { class: "cal-times" }, timeSelect("Pickup time", "puTime"), timeSelect("Return time", "rtTime")),
       h("div", { class: "cal-foot" },
         h("span", { class: "cal-hint" }, trip.puDate && trip.rtDate
           ? `${rentalDays(tripPu(trip), tripRt(trip))} day${rentalDays(tripPu(trip), tripRt(trip)) === 1 ? "" : "s"}`
@@ -705,7 +705,7 @@ function SearchPill({ where, point, trip, category, compact, onSearch }) {
   };
   const puSeg = h("button", { type: "button", class: "seg", "aria-haspopup": "dialog", "aria-expanded": "false",
     onclick: (e) => { e.stopPropagation(); openSeg === puSeg ? close() : open(puSeg, "start"); } },
-    h("span", { class: "seg-label" }, "Pick-up"), puValue);
+    h("span", { class: "seg-label" }, "Pickup"), puValue);
   const rtSeg = h("button", { type: "button", class: "seg", "aria-haspopup": "dialog", "aria-expanded": "false",
     onclick: (e) => { e.stopPropagation(); openSeg === rtSeg ? close() : open(rtSeg, "end"); } },
     h("span", { class: "seg-label" }, "Return"), rtValue);
@@ -713,8 +713,8 @@ function SearchPill({ where, point, trip, category, compact, onSearch }) {
   const submit = () => {
     const t = state.trip;
     if (!state.where.trim()) { errorEl.textContent = "Where are you renting? Enter a city, an address or an airport code."; whereInput.focus(); return; }
-    if (!t.puDate || !t.rtDate) { errorEl.textContent = "Choose your pick-up and return dates."; open(t.puDate ? rtSeg : puSeg, t.puDate ? "end" : "start"); return; }
-    if (tripRt(t) <= tripPu(t)) { errorEl.textContent = "Choose a return time after the pick-up."; open(rtSeg, "end"); return; }
+    if (!t.puDate || !t.rtDate) { errorEl.textContent = "Choose your pickup and return dates."; open(t.puDate ? rtSeg : puSeg, t.puDate ? "end" : "start"); return; }
+    if (tripRt(t) <= tripPu(t)) { errorEl.textContent = "Choose a return time after the pickup."; open(rtSeg, "end"); return; }
     close();
     hideHits();
     onSearch({ where: state.where.trim(), point: state.point, trip: { ...t }, category: state.category });
@@ -1311,7 +1311,7 @@ function branchView(id, res, trip, q) {
     set(box,
       h("div", { class: "bb-title" }, chosen.name),
       h("dl", { class: "bb-summary" },
-        line("Pick-up", `${fmtDay(t.puDate)}, ${fmtTime(t.puTime)}`),
+        line("Pickup", `${fmtDay(t.puDate)}, ${fmtTime(t.puTime)}`),
         line("Return", `${fmtDay(t.rtDate)}, ${fmtTime(t.rtTime)}`),
         rentalLines(chosen, cDays).map((l) => line(l.label, money(l.amount, true))),
         qte.taxLines.length ? qte.taxLines.map((t) => line(t.label, money(t.amount, true))) : line("Tax", "None")),
@@ -1443,7 +1443,7 @@ function checkoutView(id, b, cls, trip, days, backHref) {
         h("div", null, h("b", null, cls.name), h("span", null, [cls.category, cls.seats != null && `${cls.seats} seats`, cls.bags != null && `${cls.bags} bags`].filter(Boolean).join(" \u00b7 ")),
           h("div", { style: { fontSize: "14px", marginTop: "2px" } }, b.name))),
       h("div", { class: "sum-dates" },
-        h("div", null, h("small", null, "Pick-up"), fmtDay(trip.puDate), h("br"), fmtTime(trip.puTime)),
+        h("div", null, h("small", null, "Pickup"), fmtDay(trip.puDate), h("br"), fmtTime(trip.puTime)),
         h("div", null, h("small", null, "Return"), fmtDay(trip.rtDate), h("br"), fmtTime(trip.rtTime))),
       quoteLines(quote(cls, days, accepted(), taxes)),
       h("p", { class: "bb-note" }, "You won't be charged now. Pay at pickup."));
@@ -1785,7 +1785,7 @@ function ConfirmedPage() {
         h("div", null, h("b", null, c.className), h("span", null, c.branch.name),
           c.branch.address && h("div", { style: { fontSize: "14px", color: "var(--ink-55)" } }, c.branch.address))),
       h("div", { class: "sum-dates" },
-        h("div", null, h("small", null, "Pick-up"), fmtDay(c.trip.puDate), h("br"), fmtTime(c.trip.puTime)),
+        h("div", null, h("small", null, "Pickup"), fmtDay(c.trip.puDate), h("br"), fmtTime(c.trip.puTime)),
         h("div", null, h("small", null, "Return"), fmtDay(c.trip.rtDate), h("br"), fmtTime(c.trip.rtTime))),
       quoteLines({ lines: c.lines, rentalCount: c.rentalCount, taxLines: c.taxLines || [], total: c.total, savings: c.savings || 0 }),
       h("p", { class: "bb-note" }, "You won't be charged now. Pay at pickup."))));
