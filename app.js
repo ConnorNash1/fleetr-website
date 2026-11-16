@@ -196,10 +196,12 @@ function fmtTime(t) {
 }
 const fmtShort = (s) => { const d = parseYmd(s); return `${MONTHS[d.getMonth()].slice(0, 3)} ${d.getDate()}`; };
 const TIMES = Array.from({ length: 48 }, (_, i) => `${pad(Math.floor(i / 2))}:${i % 2 ? "30" : "00"}`);
-// Mirrors booking_days: whole days, any part of a day counts, at least one.
+// Mirrors booking_days: every started 24 hours, with a 29-minute grace, at
+// least one day.
+const DAY_GRACE_MS = 29 * 60000;
 function rentalDays(pu, rt) {
   const ms = (s) => { const [d, t] = s.split("T"); const [y, m, dd] = d.split("-").map(Number); const [hh, mi] = t.split(":").map(Number); return Date.UTC(y, m - 1, dd, hh, mi); };
-  return Math.max(1, Math.ceil((ms(rt) - ms(pu)) / 86400000));
+  return Math.max(1, Math.ceil((ms(rt) - ms(pu) - DAY_GRACE_MS) / 86400000));
 }
 const stamp = (date, time) => `${date}T${time}`;
 const asTimestamp = (s) => `${s}:00`;
