@@ -1,4 +1,6 @@
-# Deploys fleetr.ai to GitHub Pages on every push to main.
+# Deploys fleetr.ai (production) to GitHub Pages, by hand only: Actions >
+# Deploy fleetr.ai > Run workflow. Every push to main goes to staging instead
+# (deploy-staging.yml, staging.fleetr.ai).
 #
 # Before publishing, the ?v= value on the app.js link in index.html is set to
 # this commit, so every deploy loads its own app.js instead of mixing a cached
@@ -9,8 +11,6 @@
 name: Deploy fleetr.ai
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
