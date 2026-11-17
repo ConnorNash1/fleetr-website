@@ -43,6 +43,38 @@
   <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  /* fleetr design tokens 1.0. The same block sits in the staff app, check-in,
+     fleetr.ai and HQ (design_tokens.test.mjs keeps them identical). Colour is
+     built around the logo's terracotta, which itself never changes. */
+  :root{
+    --fl-paper: #F9F9F7; --fl-surface: #FFFFFF; --fl-sunken: #F1F0EC; --fl-hover: #F4F3EF;
+    --fl-ink: #1F1E1D; --fl-ink-2: #4A4946; --fl-ink-3: #6B6A66; --fl-ink-4: #8A8984;
+    --fl-line: rgba(31, 30, 29, 0.12); --fl-line-soft: rgba(31, 30, 29, 0.07); --fl-line-strong: rgba(31, 30, 29, 0.24);
+    --fl-brand: #F4845F; --fl-brand-hover: #EE7550; --fl-brand-press: #E06D47; --fl-on-brand: #1F1E1D;
+    --fl-brand-text: #B4532F; --fl-brand-soft: rgba(244, 132, 95, 0.14); --fl-brand-wash: rgba(244, 132, 95, 0.07);
+    --fl-success: #17683F; --fl-success-soft: #E3F4EA; --fl-warning: #8A5100; --fl-warning-soft: #FDF1DC;
+    --fl-danger: #B42318; --fl-danger-soft: #FDE8E6; --fl-info: #2557A7; --fl-info-soft: #E6EEFB;
+    --fl-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --fl-text-xs: 12px; --fl-text-sm: 13px; --fl-text-base: 15px; --fl-text-md: 17px;
+    --fl-text-lg: 20px; --fl-text-xl: 24px; --fl-text-2xl: 30px; --fl-text-3xl: 40px;
+    --fl-leading-tight: 1.2; --fl-leading: 1.5; --fl-tracking-tight: -0.02em;
+    --fl-space-1: 4px; --fl-space-2: 8px; --fl-space-3: 12px; --fl-space-4: 16px; --fl-space-5: 20px;
+    --fl-space-6: 24px; --fl-space-7: 32px; --fl-space-8: 40px; --fl-space-9: 48px; --fl-space-10: 64px;
+    --fl-radius-sm: 6px; --fl-radius: 10px; --fl-radius-lg: 14px; --fl-radius-xl: 20px; --fl-radius-pill: 999px;
+    --fl-shadow-xs: 0 1px 2px rgba(31, 30, 29, 0.05);
+    --fl-shadow-sm: 0 1px 2px rgba(31, 30, 29, 0.06), 0 2px 8px rgba(31, 30, 29, 0.05);
+    --fl-shadow-md: 0 2px 4px rgba(31, 30, 29, 0.06), 0 10px 28px rgba(31, 30, 29, 0.10);
+    --fl-shadow-lg: 0 4px 8px rgba(31, 30, 29, 0.06), 0 24px 64px rgba(31, 30, 29, 0.18);
+    --fl-ring: 0 0 0 3px rgba(244, 132, 95, 0.35);
+    --fl-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1); --fl-ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --fl-dur-fast: 120ms; --fl-dur: 180ms; --fl-dur-slow: 280ms;
+    --fl-tap: 44px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    :root{ --fl-dur-fast: 0ms; --fl-dur: 0ms; --fl-dur-slow: 0ms; }
+  }
+  /* end fleetr design tokens */
+
   /* The palette. Terracotta is the only accent and marks actions and active
      states; everything else is one of the neutrals. */
   :root {
@@ -75,7 +107,7 @@
   button, input, select, textarea { font: inherit; color: inherit; }
   button { cursor: pointer; background: none; border: none; }
   img { display: block; max-width: 100%; }
-  ::selection { background: var(--rule); }
+  ::selection { background: var(--fl-brand-soft); }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   .wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 20px; }
@@ -900,7 +932,7 @@
   .ca-progress i { display: block; height: 100%; width: var(--to); background: var(--terra); }
   .ca-screen.on .ca-progress i { animation: ca-prog .5s .3s cubic-bezier(.4, 0, .2, 1) both; }
   @keyframes ca-prog { from { width: var(--from); } }
-  .ca-links { display: flex; justify-content: center; gap: 20px; font-size: 14px; font-weight: 600; color: #C9603D; padding: 8px 0 4px; }
+  .ca-links { display: flex; justify-content: center; gap: 20px; font-size: 14px; font-weight: 600; color: var(--fl-brand-text); padding: 8px 0 4px; }
   .ca-car { display: grid; gap: 4px; padding: 16px 18px; margin-bottom: 12px; background: #FFFFFF; border: 1.5px solid rgba(31, 30, 29, .12); border-radius: 14px; box-shadow: 0 1px 2px rgba(31, 30, 29, .05); transition: border-color .15s, box-shadow .15s; }
   .ca-car b { font-size: 16.5px; }
   .ca-car span { font-size: 14.5px; color: var(--ink-70); }
@@ -930,7 +962,7 @@
   .ca-dsection-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 12.5px; overflow-wrap: anywhere; }
   .ca-dsection-thumb, .ca-dsection-add { aspect-ratio: 1; width: 100%; border-radius: 10px; }
   .ca-dsection-thumb { border: 1px solid rgba(31, 30, 29, .12); background: linear-gradient(160deg, var(--rule-2), var(--ink-55)); }
-  .ca-dsection-add { display: grid; place-items: center; border: 1px dashed var(--ink-55); background: var(--paper); font-size: 13.5px; font-weight: 600; color: #C9603D; }
+  .ca-dsection-add { display: grid; place-items: center; border: 1px dashed var(--ink-55); background: var(--paper); font-size: 13.5px; font-weight: 600; color: var(--fl-brand-text); }
   /* Protection, and the cards on Review and sign, as the app draws them. */
   .ca-pcard { background: #FFFFFF; border: 1px solid rgba(31, 30, 29, .12); border-radius: 14px; box-shadow: 0 1px 2px rgba(31, 30, 29, .05); padding: 16px 18px; margin-bottom: 12px; }
   .ca-pcard-name { font-weight: 600; font-size: 16px; margin-bottom: 6px; }
@@ -979,7 +1011,7 @@
   .ca-vehicle, .ca-info, .ca-damage { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); box-shadow: 0 1px 2px rgba(31, 30, 29, .05); }
   .ca-info { box-shadow: inset 3px 0 0 var(--terra), 0 1px 2px rgba(31, 30, 29, .05); }
   .ca-damage::before { background: var(--terra); }
-  .ca-back, .ca-manual { color: #C9603D; }
+  .ca-back, .ca-manual { color: var(--fl-brand-text); }
   .ca-manual { text-decoration-color: var(--terra); }
   .ca-btn-primary.tap { background: #EE7550; }
   .ca-summary { background: #FFFFFF; border-color: rgba(31, 30, 29, .12); }
@@ -994,7 +1026,7 @@
     content: "Rental summary"; display: block; height: var(--notch); line-height: calc(var(--notch) - 2px);
     margin: 0 -18px 4px; padding: 0 18px; background: rgba(244, 132, 95, .14);
     border-bottom: 2px dashed rgba(31, 30, 29, .18);
-    color: #C9603D; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--fl-brand-text); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
   }
   .ca-screen.on .ca-ticket { animation: ca-ticket-in .5s .45s cubic-bezier(.2, .8, .2, 1) both; }
   @keyframes ca-ticket-in { from { opacity: 0; transform: translateY(12px); } }
@@ -1079,6 +1111,18 @@
     .cs-dots { gap: 2px; }
     .cs-dot { width: 36px; height: 44px; }
   }
+  /* fleetr design system 1.0, the shared layer: brand text that reads at
+     4.5:1, one keyboard focus ring, a press state on every button, and motion
+     that stops when the device asks for less. */
+  ::selection{ background: var(--fl-brand-soft); }
+  button, a, [role="button"]{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  [data-keys] :focus-visible, .fl-kbd :focus-visible{ outline: none; box-shadow: var(--fl-ring); }
+  .flPress:active, button:not(:disabled):active{ transition: transform var(--fl-dur-fast) var(--fl-ease-out); }
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+  /* end fleetr design system shared layer */
+
 </style>
 </head>
 <body>
