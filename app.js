@@ -1607,6 +1607,10 @@ function checkoutView(id, b, cls, trip, days, backHref) {
     // cannot book either.
     if (!validate()) return;
     v.busy = true; say(""); drawVerify();
+    // Whether this company takes saved cards, asked alongside the booking so
+    // the confirmation only offers "Save a card" where it can work. A failed
+    // ask is null and the button shows: the check-in app still says no.
+    const savedCardsAsk = rpc("public_saved_cards", { p_location_id: id }).catch(() => null);
     let res;
     try {
       res = await rpc("public_create_booking", {
@@ -1635,7 +1639,7 @@ function checkoutView(id, b, cls, trip, days, backHref) {
     }).catch(() => { /* the 30-minute run still sends it */ });
     const qte = quote(cls, res.days || days, accepted(), taxes);
     saveConfirmation({
-      resCode: res.resCode, appToken: res.appToken || null,
+      resCode: res.resCode, appToken: res.appToken || null, savedCards: await savedCardsAsk,
       branch: { name: b.name, address: b.address, city: cityOf(b), timeZone: b.timeZone, photoPath: b.photoPath, logoPath: b.logoPath },
       className: cls.name, category: cls.category, classIcon: classIcon(cls), trip, days: res.days || days,
       lines: qte.lines, rentalCount: qte.rentalCount, taxLines: qte.taxLines, total: qte.total, savings: qte.savings,
@@ -1783,7 +1787,8 @@ function ConfirmedPage() {
         // Card on file (overnight-nov17): saved through Stripe on the
         // company's own account, so pickup and return need nothing at the
         // counter. It opens the check-in app's card screen for this booking.
-        c.appToken && h("a", { class: "btn btn-line", href: `${appLink(c)}&card=1` }, icon("card", "1.8"), "Save a card for pickup"),
+        // Only where the company takes saved cards (public_saved_cards).
+        c.appToken && c.savedCards !== false && h("a", { class: "btn btn-line", href: `${appLink(c)}&card=1` }, icon("card", "1.8"), "Save a card for pickup"),
         calWrap)),
     h("aside", { class: "book-box", style: { position: "static", alignSelf: "start" } },
       h("div", { class: "summary-head" },
