@@ -459,17 +459,20 @@ function go(path, params) {
   location.hash = `#${path}${qs ? "?" + qs : ""}`;
 }
 let lastPath = null;
+// The old app pages for rental companies and dealerships now live as real
+// pages (Nov 17, SEO). Their #/ addresses go there, replacing the history
+// entry so Back doesn't bounce.
+const MOVED = { "/rental-companies": "/rental-companies/", "/dealerships": "/dealership-loaner-software/" };
 function render() {
   runCleanups();
   const { path, q } = parseHash();
+  if (MOVED[path]) { location.replace(MOVED[path]); return; }
   let page;
   if (path === "/" || path === "") page = HomePage(q);
   else if (path === "/search") page = SearchPage(q);
   else if (path.startsWith("/branch/")) page = BranchPage(path.slice(8), q);
   else if (path.startsWith("/checkout/")) page = CheckoutPage(path.slice(10), q);
   else if (path === "/confirmed") page = ConfirmedPage();
-  else if (path === "/rental-companies") page = RentalCompaniesPage(q);
-  else if (path === "/dealerships") page = DealershipsPage();
   else if (path === "/privacy") page = LegalPage("privacy");
   else if (path === "/terms") page = LegalPage("terms");
   else page = NotFoundPage();
