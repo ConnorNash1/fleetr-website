@@ -1128,7 +1128,7 @@ function SearchPage(q) {
           res.nearest
             ? h("h1", null, `Nothing within ${res.radiusKm || 50} km of ${place}. The nearest ${open.length === 1 ? "company" : "companies"} with ${cats.length ? orList(cats.map((c) => CATEGORY_ONE[c])) : "vehicles"} free:`)
             : h("h1", null, `${open.length} ${open.length === 1 ? "company" : "companies"} with ${cats.length ? orList(cats.map((c) => CATEGORY_ONE[c])) : "vehicles"} free near ${place}`),
-          h("p", null, `${tripRange(trip)} · ${days} day${days === 1 ? "" : "s"} · prices before tax`)),
+          h("p", null, `${tripRange(trip)}, ${days} day${days === 1 ? "" : "s"}. Prices are before tax.`)),
         h("div", { class: "cards" }, open.map((b) => {
           const perks = perksOf(b);
           // A branch closed at the asked times shows anyway, priced to the

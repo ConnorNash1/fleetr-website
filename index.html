@@ -660,6 +660,13 @@
   @media (min-width: 960px) { .co-cols { grid-template-columns: minmax(0, 1fr) 400px; gap: 80px; } }
   .co-summary { order: -1; }
   @media (min-width: 960px) { .co-summary { order: 0; } }
+  /* On a phone the checkout's summary shows at the top: the branch page's
+     booking card hides below 960px (its bar takes over), and that rule hid
+     the price breakdown here too, so a renter reserved without seeing it
+     (found overnight-nov17). */
+  @media (max-width: 959px) {
+    .co-summary .book-box { display: block; position: static; box-shadow: none; padding: 18px; }
+  }
   .co-step { padding: 30px 0; border-top: 1px solid var(--rule); }
   .co-step:first-child { border-top: none; padding-top: 0; }
   .co-step-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
