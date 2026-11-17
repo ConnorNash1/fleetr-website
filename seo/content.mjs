@@ -2,6 +2,8 @@
 // is written for. seo/build.mjs turns these into HTML. Plain language for
 // rental operators and renters, Canadian spelling (but "license"), "fleetr"
 // in lower case, and no claims the product does not make good on.
+import { GUIDES } from "./guides.mjs";
+
 export const ORG = {
   "@type": "Organization", "@id": "https://fleetr.ai/#org", name: "fleetr", legalName: "fleetr Technologies Corp.",
   url: "https://fleetr.ai", logo: "https://fleetr.ai/icon-512.png", email: "connor@fleetr.ai",
@@ -558,11 +560,14 @@ const ARTICLES = [
   }),
 ];
 
+// Guides 4 to 12, in their own file.
+ARTICLES.push(...GUIDES.map(article));
+
 const resourcesHub = {
   path: "/resources/", group: "hub", navActive: "/rental-companies/",
   title: "Guides for Car Rental Companies in Canada | fleetr",
   ogTitle: "Guides for rental companies",
-  description: "Practical guides for Canadian car rental operators: starting a rental business, insurance for rental fleets and replacing paper agreements.",
+  description: "Practical guides for Canadian car rental operators: starting out, insurance, pricing, damage claims, deposits, winter, no-shows and getting bookings.",
   keyword: "car rental business guides",
   crumbs: [["/", "fleetr"], ["/resources/", "Guides"]],
   body: hero({ kicker: "Guides", h1: "Guides for running a rental company in Canada.",

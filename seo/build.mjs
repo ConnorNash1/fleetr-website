@@ -23,7 +23,7 @@ const NAV = [["/", "Rent a Vehicle"], ["https://app.fleetr.ai", "Check in"], ["/
 const FOOT = (pages) => [
   ["Rent a car", [["/", "Search fleetr.ai"], ...pages.filter((p) => p.group === "city").map((p) => [p.path, `Car rental ${p.short}`])]],
   ["For rental companies", pages.filter((p) => p.group === "operator").map((p) => [p.path, p.navLabel])],
-  ["Guides", [["/resources/", "All guides"], ...pages.filter((p) => p.group === "article").map((p) => [p.path, p.navLabel])]],
+  ["Guides", [["/resources/", "All guides"], ...pages.filter((p) => p.group === "article").slice(0, 5).map((p) => [p.path, p.navLabel])]],
   ["fleetr", [["https://app.fleetr.ai", "Check in"], ["https://internal.fleetr.ai", "Staff Sign In"], ["/#/privacy", "Privacy Policy"], ["/#/terms", "Terms of Use"]]],
 ];
 
