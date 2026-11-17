@@ -1780,6 +1780,10 @@ function ConfirmedPage() {
         h("div", { class: "code" }, c.resCode)),
       h("div", { class: "confirm-actions" },
         h("a", { class: "btn btn-primary", href: appLink(c) }, icon("phone", "1.8"), "Check in with the app"),
+        // Card on file (overnight-nov17): saved through Stripe on the
+        // company's own account, so pickup and return need nothing at the
+        // counter. It opens the check-in app's card screen for this booking.
+        c.appToken && h("a", { class: "btn btn-line", href: `${appLink(c)}&card=1` }, icon("card", "1.8"), "Save a card for pickup"),
         calWrap)),
     h("aside", { class: "book-box", style: { position: "static", alignSelf: "start" } },
       h("div", { class: "summary-head" },
