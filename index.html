@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>fleetr | Rent a vehicle</title>
-  <meta name="description" content="Cars, SUVs, trucks and vans from rental companies. Reserve in minutes, check in from your phone and pay at pickup.">
+  <title>fleetr | Car Rental from Local Companies in Atlantic Canada</title>
+  <meta name="description" content="Rent a car, SUV, truck or van from local rental companies in Atlantic Canada. See real availability, book in minutes, check in on your phone and pay at pickup.">
+  <link rel="canonical" href="https://fleetr.ai/">
 
   <meta property="og:site_name" content="fleetr">
-  <meta property="og:title" content="fleetr">
-  <meta property="og:description" content="Rent a vehicle. Reserve in minutes and pay at pickup.">
-  <meta property="og:url" content="https://fleetr.ai">
+  <meta property="og:title" content="fleetr: car rental from local companies">
+  <meta property="og:description" content="Rent from local companies in Atlantic Canada. Book in minutes, check in on your phone and pay at pickup.">
+  <meta property="og:url" content="https://fleetr.ai/">
+  <meta property="og:locale" content="en_CA">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://fleetr.ai/og-image.png">
   <meta property="og:image:type" content="image/png">
@@ -17,9 +19,11 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="fleetr">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="fleetr">
-  <meta name="twitter:description" content="Rent a vehicle. Reserve in minutes and pay at pickup.">
+  <meta name="twitter:title" content="fleetr: car rental from local companies">
+  <meta name="twitter:description" content="Rent from local companies in Atlantic Canada. Book in minutes, check in on your phone and pay at pickup.">
   <meta name="twitter:image" content="https://fleetr.ai/og-image.png">
+
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://fleetr.ai/#org","name":"fleetr","legalName":"fleetr Technologies Corp.","url":"https://fleetr.ai","logo":"https://fleetr.ai/icon-512.png","email":"connor@fleetr.ai","areaServed":{"@type":"Country","name":"Canada"}},{"@type":"WebSite","@id":"https://fleetr.ai/#site","name":"fleetr","url":"https://fleetr.ai/","inLanguage":"en-CA","publisher":{"@id":"https://fleetr.ai/#org"}},{"@type":"SoftwareApplication","name":"fleetr","applicationCategory":"BusinessApplication","operatingSystem":"Web, iOS, Android","url":"https://fleetr.ai/rental-companies/","publisher":{"@id":"https://fleetr.ai/#org"},"description":"Software for independent car rental companies and dealerships: online booking, phone check-in, digital rental agreements, damage claims, billing and reports."}]}</script>
 
   <link rel="icon" href="/favicon.ico" sizes="48x48">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -1127,6 +1131,8 @@
        at 23px and the coverage Accept and Decline at 38px. */
     .back, .back-link { min-height: 44px; }
     .segs button { min-height: 44px; }
+    /* Nov 17: the footer links were 23px. */
+    .footer nav a { display: inline-flex; align-items: center; min-height: 44px; }
   }
   /* fleetr design system 1.0, the shared layer: brand text that reads at
      4.5:1, one keyboard focus ring, a press state on every button, and motion
@@ -1149,8 +1155,8 @@
       <nav class="nav-links" aria-label="Main">
         <a href="#/" data-nav="rent">Rent a Vehicle</a>
         <a href="https://app.fleetr.ai">Check in</a>
-        <a href="#/rental-companies" data-nav="rental-companies">For Rental Companies</a>
-        <a href="#/dealerships" data-nav="dealerships">For Dealerships</a>
+        <a href="/rental-companies/" data-nav="rental-companies">For Rental Companies</a>
+        <a href="/dealership-loaner-software/" data-nav="dealerships">For Dealerships</a>
         <a class="nav-login" href="https://internal.fleetr.ai">Staff Sign In</a>
       </nav>
       <button class="nav-menu-btn" type="button" aria-expanded="false" aria-controls="nav-sheet">
@@ -1160,23 +1166,62 @@
       <div class="nav-sheet" id="nav-sheet">
         <a href="#/" data-nav="rent">Rent a Vehicle</a>
         <a href="https://app.fleetr.ai">Check in</a>
-        <a href="#/rental-companies" data-nav="rental-companies">For Rental Companies</a>
-        <a href="#/dealerships" data-nav="dealerships">For Dealerships</a>
+        <a href="/rental-companies/" data-nav="rental-companies">For Rental Companies</a>
+        <a href="/dealership-loaner-software/" data-nav="dealerships">For Dealerships</a>
         <hr>
         <a href="https://internal.fleetr.ai">Staff Sign In</a>
       </div>
     </div>
   </header>
 
-  <main id="app" tabindex="-1"></main>
+  <main id="app" tabindex="-1">
+    <!-- The home page as search engines and no-script readers get it (Nov 17,
+         SEO). app.js renders the live page over it straight away. -->
+    <div class="home">
+      <section class="hero"><div class="wrap">
+        <span class="kicker">Rent a vehicle</span>
+        <h1 style="margin-top:22px"><span class="hero-line">Book it here.</span> <span class="hero-line">Skip the counter.</span></h1>
+        <p class="lead" style="margin-top:18px">Rent a car, SUV, truck or van from local rental companies in Atlantic Canada. See real availability for your dates, book in minutes, check in on your phone and pay at pickup.</p>
+      </div></section>
+      <section class="band"><div class="wrap">
+        <span class="kicker">How renting works</span>
+        <h2>Book in minutes. Pick up in minutes.</h2>
+        <p class="lead">Booking and check-in happen on your phone. At the branch, you just pay and grab the keys.</p>
+        <ol>
+          <li><strong>Search.</strong> Tell us where and when. You'll only see locations with a vehicle available for your dates.</li>
+          <li><strong>Reserve.</strong> Pick a vehicle and your coverages, confirm your number with a texted code, and you're booked.</li>
+          <li><strong>Pick up.</strong> At pickup, tap the link we text you, scan your license, photograph any damage and sign.</li>
+        </ol>
+      </div></section>
+      <section class="band"><div class="wrap">
+        <span class="kicker">Car rental by city</span>
+        <h2>Rent from local companies near you.</h2>
+        <ul>
+          <li><a href="/car-rental/st-johns/">Car rental in St. John's</a></li>
+          <li><a href="/car-rental/halifax/">Car rental in Halifax</a></li>
+          <li><a href="/car-rental/moncton/">Car rental in Moncton</a></li>
+          <li><a href="/car-rental/charlottetown/">Car rental in Charlottetown</a></li>
+          <li><a href="/car-rental/fredericton/">Car rental in Fredericton</a></li>
+        </ul>
+      </div></section>
+      <section class="band"><div class="wrap">
+        <span class="kicker">For businesses</span>
+        <h2>Run a rental company? Or a dealership that could be one?</h2>
+        <p class="lead">fleetr automates the whole rental, from booking to return, and lists your vehicles here for renters to book.</p>
+        <p><a href="/rental-companies/">For rental companies</a> &middot; <a href="/car-rental-software/">Car rental software</a> &middot; <a href="/dealership-loaner-software/">For dealerships</a> &middot; <a href="/resources/">Guides</a></p>
+      </div></section>
+    </div>
+  </main>
 
   <footer class="footer">
     <div class="wrap">
       <a href="#/" class="logo" aria-label="fleetr, home"><img class="fleetr-logo" src="/fleetr-logo-terracotta-on-white.svg" alt="fleetr"></a>
       <nav aria-label="Footer">
         <a href="#/">Rent a Vehicle</a>
-        <a href="#/rental-companies">For Rental Companies</a>
-        <a href="#/dealerships">For Dealerships</a>
+        <a href="/car-rental/">Car rental by city</a>
+        <a href="/rental-companies/">For Rental Companies</a>
+        <a href="/dealership-loaner-software/">For Dealerships</a>
+        <a href="/resources/">Guides</a>
         <a href="https://internal.fleetr.ai">Staff Sign In</a>
         <a href="#/privacy">Privacy Policy</a>
         <a href="#/terms">Terms of Use</a>

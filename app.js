@@ -819,14 +819,21 @@ function HomePage(q) {
         point("Return on your own", "Park, check in the vehicle on your phone and go. Your return time locks the moment you finish, so you never pay for waiting on staff."),
         point("Everything by text", "Your confirmation, reminders and check-in link all come by text. No app to download, no account to make.")))),
 
+    h("section", { class: "band" }, h("div", { class: "wrap" },
+      h("span", { class: "kicker kicker-plain" }, "Car rental by city"),
+      h("div", { class: "points" },
+        [["st-johns", "St. John's"], ["halifax", "Halifax"], ["moncton", "Moncton"], ["charlottetown", "Charlottetown"], ["fredericton", "Fredericton"]].map(([slug, name]) =>
+          h("a", { class: "point", href: `/car-rental/${slug}/`, style: { textDecoration: "none" } },
+            h("h3", null, `Car rental in ${name}`), h("p", null, "Local companies, pickup tips and what to know before you drive.")))))),
+
     h("section", { class: "ink-band" }, h("div", { class: "wrap grid" },
       h("div", null,
         h("span", { class: "kicker" }, "For businesses"),
         h("h2", { style: { marginTop: "18px" } }, "Run a rental company? Or a dealership that could be one?"),
         h("p", null, "fleetr automates the whole rental, from booking to return, and lists your vehicles here for renters to book. For dealerships, that means the cars on your lot can earn while they wait to sell.")),
       h("div", { class: "actions" },
-        h("a", { class: "btn btn-primary", href: "#/rental-companies" }, "For Rental Companies"),
-        h("a", { class: "btn btn-line", href: "#/dealerships" }, "For Dealerships")))));
+        h("a", { class: "btn btn-primary", href: "/rental-companies/" }, "For Rental Companies"),
+        h("a", { class: "btn btn-line", href: "/dealership-loaner-software/" }, "For Dealerships")))));
 }
 
 // ─── Search results ──────────────────────────────────────────────────────────
@@ -1072,7 +1079,7 @@ function SearchPage(q) {
         cats.length > 0 && h("button", { type: "button", class: "btn-text", onclick: () => go("/search", params({ cat: null })) }, "Show all vehicle types")),
       h("div", { class: "empty-map" }, small),
       h("p", { class: "empty-note" }, `Run a rental company${where ? ` in ${place}` : ""}? `,
-        h("a", { class: "link-arrow", href: "#/rental-companies" }, "List your fleet on fleetr")));
+        h("a", { class: "link-arrow", href: "/rental-companies/" }, "List your fleet on fleetr")));
     // A timeout, not an animation frame: frames are paused in a background
     // tab, which left the map unbuilt until the tab was looked at.
     setTimeout(() => {
@@ -1200,10 +1207,39 @@ function BranchPage(id, q) {
         return;
       }
       set(root, branchView(id, res, trip, q));
+      branchSchema(id, res);
     })
     .catch(() => set(root, h("div", { class: "wrap" }, emptyState("Connection", "Something went wrong.", REASONS.network,
       h("button", { type: "button", class: "btn btn-primary", onclick: render }, "Try again")))));
   return root;
+}
+
+// The branch as schema.org data in the page's head while it's open (Nov 17,
+// SEO): an AutoRental with its address and hours, each class a Product
+// offered at its daily rate.
+function branchSchema(id, res) {
+  const b = res.branch || {};
+  const DAY = { mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday" };
+  const hours = Object.entries(b.hours || {}).filter(([, d]) => d && d.open && d.close)
+    .map(([k, d]) => ({ "@type": "OpeningHoursSpecification", dayOfWeek: DAY[k], opens: String(d.open).slice(0, 5), closes: String(d.close).slice(0, 5) }));
+  const data = {
+    "@context": "https://schema.org", "@type": "AutoRental", name: [b.company, b.name].filter(Boolean).join(", "),
+    url: `https://fleetr.ai/#/branch/${id}`,
+    address: b.address ? { "@type": "PostalAddress", streetAddress: b.address, addressCountry: "CA" } : undefined,
+    geo: b.latitude != null ? { "@type": "GeoCoordinates", latitude: b.latitude, longitude: b.longitude } : undefined,
+    openingHoursSpecification: hours.length ? hours : undefined,
+    paymentAccepted: (b.paymentMethods || []).join(", ") || undefined,
+    makesOffer: (res.classes || []).filter((c) => c.dailyRate != null).map((c) => ({
+      "@type": "Offer", priceCurrency: "CAD", price: Number(c.dailyRate).toFixed(2),
+      priceSpecification: { "@type": "UnitPriceSpecification", price: Number(c.dailyRate).toFixed(2), priceCurrency: "CAD", unitText: "DAY" },
+      itemOffered: { "@type": "Product", name: c.name, category: c.category || "Car rental" },
+    })),
+  };
+  const el = document.createElement("script");
+  el.type = "application/ld+json";
+  el.textContent = JSON.stringify(data).replace(/</g, "\\u003c");
+  document.head.appendChild(el);
+  onCleanup(() => el.remove());
 }
 
 // Opening hours as a few rows: days in a row with the same hours share one

@@ -1,0 +1,6 @@
+# fleetr.ai. The booking steps (checkout, confirmation) live behind the
+# home page's #/ routes, which search engines do not crawl as pages.
+User-agent: *
+Allow: /
+
+Sitemap: https://fleetr.ai/sitemap.xml
