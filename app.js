@@ -459,20 +459,17 @@ function go(path, params) {
   location.hash = `#${path}${qs ? "?" + qs : ""}`;
 }
 let lastPath = null;
-// The old app pages for rental companies and dealerships now live as real
-// pages (Nov 17, SEO). Their #/ addresses go there, replacing the history
-// entry so Back doesn't bounce.
-const MOVED = { "/rental-companies": "/rental-companies/", "/dealerships": "/dealership-loaner-software/" };
 function render() {
   runCleanups();
   const { path, q } = parseHash();
-  if (MOVED[path]) { location.replace(MOVED[path]); return; }
   let page;
   if (path === "/" || path === "") page = HomePage(q);
   else if (path === "/search") page = SearchPage(q);
   else if (path.startsWith("/branch/")) page = BranchPage(path.slice(8), q);
   else if (path.startsWith("/checkout/")) page = CheckoutPage(path.slice(10), q);
   else if (path === "/confirmed") page = ConfirmedPage();
+  else if (path === "/rental-companies") page = RentalCompaniesPage(q);
+  else if (path === "/dealerships") page = DealershipsPage();
   else if (path === "/privacy") page = LegalPage("privacy");
   else if (path === "/terms") page = LegalPage("terms");
   else page = NotFoundPage();
@@ -822,21 +819,14 @@ function HomePage(q) {
         point("Return on your own", "Park, check in the vehicle on your phone and go. Your return time locks the moment you finish, so you never pay for waiting on staff."),
         point("Everything by text", "Your confirmation, reminders and check-in link all come by text. No app to download, no account to make.")))),
 
-    h("section", { class: "band" }, h("div", { class: "wrap" },
-      h("span", { class: "kicker kicker-plain" }, "Car rental by city"),
-      h("div", { class: "points" },
-        [["st-johns", "St. John's"], ["halifax", "Halifax"], ["moncton", "Moncton"], ["charlottetown", "Charlottetown"], ["fredericton", "Fredericton"]].map(([slug, name]) =>
-          h("a", { class: "point", href: `/car-rental/${slug}/`, style: { textDecoration: "none" } },
-            h("h3", null, `Car rental in ${name}`), h("p", null, "Local companies, pickup tips and what to know before you drive.")))))),
-
     h("section", { class: "ink-band" }, h("div", { class: "wrap grid" },
       h("div", null,
         h("span", { class: "kicker" }, "For businesses"),
         h("h2", { style: { marginTop: "18px" } }, "Run a rental company? Or a dealership that could be one?"),
         h("p", null, "fleetr automates the whole rental, from booking to return, and lists your vehicles here for renters to book. For dealerships, that means the cars on your lot can earn while they wait to sell.")),
       h("div", { class: "actions" },
-        h("a", { class: "btn btn-primary", href: "/rental-companies/" }, "For Rental Companies"),
-        h("a", { class: "btn btn-line", href: "/dealership-loaner-software/" }, "For Dealerships")))));
+        h("a", { class: "btn btn-primary", href: "#/rental-companies" }, "For Rental Companies"),
+        h("a", { class: "btn btn-line", href: "#/dealerships" }, "For Dealerships")))));
 }
 
 // ─── Search results ──────────────────────────────────────────────────────────
@@ -1082,7 +1072,7 @@ function SearchPage(q) {
         cats.length > 0 && h("button", { type: "button", class: "btn-text", onclick: () => go("/search", params({ cat: null })) }, "Show all vehicle types")),
       h("div", { class: "empty-map" }, small),
       h("p", { class: "empty-note" }, `Run a rental company${where ? ` in ${place}` : ""}? `,
-        h("a", { class: "link-arrow", href: "/rental-companies/" }, "List your fleet on fleetr")));
+        h("a", { class: "link-arrow", href: "#/rental-companies" }, "List your fleet on fleetr")));
     // A timeout, not an animation frame: frames are paused in a background
     // tab, which left the map unbuilt until the tab was looked at.
     setTimeout(() => {

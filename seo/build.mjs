@@ -19,9 +19,21 @@ const url = (p) => `${SITE}${p}`;
 // fetched fresh and an unchanged one stays cached.
 const ver = (f) => crypto.createHash("sha256").update(fs.readFileSync(path.join(ROOT, f))).digest("hex").slice(0, 10);
 
-const NAV = [["/", "Rent a Vehicle"], ["https://app.fleetr.ai", "Check in"], ["/rental-companies/", "For Rental Companies"], ["/dealership-loaner-software/", "For Dealerships"]];
+// The header is the home page's own (Nov 23): For Rental Companies and For
+// Dealerships go to its pages, and no operator page is linked from it until
+// it is approved.
+const NAV = [["/#/", "Rent a Vehicle"], ["https://app.fleetr.ai", "Check in"], ["/#/rental-companies", "For Rental Companies"], ["/#/dealerships", "For Dealerships"]];
+// The city pages are unpublished for now (Nov 23): not built, not in the
+// sitemap and not linked. Their content stays in content.mjs.
+export const UNPUBLISHED = (p) => p.group === "city" || p.path === "/car-rental/";
+const PUBLISHED = PAGES.filter((p) => !UNPUBLISHED(p));
+// A link to an unpublished city page, as plain words; a sentence that only
+// points to the city pages is left out.
+const unlinkCities = (html) => html
+  .replace(/ ?See the city pages for (<a href="\/car-rental\/[^"]*">[^<]*<\/a>(, | and )?)+\./g, "")
+  .replace(/<a href="\/car-rental\/[^"]*">([^<]*)<\/a>/g, "$1");
 const FOOT = (pages) => [
-  ["Rent a car", [["/", "Search fleetr.ai"], ...pages.filter((p) => p.group === "city").map((p) => [p.path, `Car rental ${p.short}`])]],
+  ["Rent a car", [["/", "Search fleetr.ai"]]],
   ["For rental companies", pages.filter((p) => p.group === "operator").map((p) => [p.path, p.navLabel])],
   ["Guides", [["/resources/", "All guides"], ...pages.filter((p) => p.group === "article").slice(0, 5).map((p) => [p.path, p.navLabel])]],
   ["fleetr", [["https://app.fleetr.ai", "Check in"], ["https://internal.fleetr.ai", "Staff Sign In"], ["/#/privacy", "Privacy Policy"], ["/#/terms", "Terms of Use"]]],
@@ -155,7 +167,7 @@ export function render(page, pages) {
   ${header(page)}
   <main id="main">
     <div class="wrap">${crumbs(page)}</div>
-    ${page.body}
+    ${unlinkCities(page.body)}
     ${faq}
     ${cta}
   </main>
@@ -169,14 +181,14 @@ export function render(page, pages) {
 
 export function build() {
   const written = [];
-  for (const page of PAGES) {
+  for (const page of PUBLISHED) {
     const file = path.join(ROOT, page.path, "index.html");
     fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, render(page, PAGES));
+    fs.writeFileSync(file, render(page, PUBLISHED));
     written.push(page.path);
   }
   const today = "2026-11-17";
-  const all = ["/", ...PAGES.map((p) => p.path)];
+  const all = ["/", ...PUBLISHED.map((p) => p.path)];
   fs.writeFileSync(path.join(ROOT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${all.map((p) => `  <url><loc>${url(p)}</loc><lastmod>${today}</lastmod></url>`).join("\n")}
